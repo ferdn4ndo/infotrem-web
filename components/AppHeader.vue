@@ -16,15 +16,9 @@
       src="/logo-light-bg.svg"
     />
 
-    <v-spacer
-      class="hidden-md-and-down"
-    />
+    <v-spacer class="hidden-md-and-down" />
 
-    <v-btn
-      icon
-      class="hidden-lg-and-up"
-      @click.stop="clickSearchIcon"
-    >
+    <v-btn icon class="hidden-lg-and-up" @click.stop="clickSearchIcon">
       <v-icon>fas fa-magnifying-glass</v-icon>
     </v-btn>
 
@@ -36,9 +30,7 @@
       @click:append-outer="clickSearchButton"
     />
 
-    <v-spacer
-      class="hidden-md-and-down"
-    />
+    <v-spacer class="hidden-md-and-down" />
 
     <v-btn icon @click.stop="handleShowProfileClick">
       <v-icon>mdi-account-box</v-icon>
@@ -47,51 +39,51 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
-  import { useTheme } from 'vuetify'
+import { ref } from 'vue'
+import { useTheme } from 'vuetify'
 
-  const emit = defineEmits<{
-    (e: 'toggle-show-profile'): void
-    (e: 'toggle-show-menu'): void
-  }>()
+const emit = defineEmits<{
+  (e: 'toggle-show-profile'): void
+  (e: 'toggle-show-menu'): void
+}>()
 
-  const searchFieldText = ref("");
+const searchFieldText = ref('')
 
-  function handleShowMenuClick() {
-    console.log("tooggle show menu clicked")
-    emit("toggle-show-menu");
-  }
+function handleShowMenuClick() {
+  console.log('tooggle show menu clicked')
+  emit('toggle-show-menu')
+}
 
-  function handleShowProfileClick() {
-    console.log("toogle show profile clicked");
-    emit("toggle-show-profile");
-  }
+function handleShowProfileClick() {
+  console.log('toogle show profile clicked')
+  emit('toggle-show-profile')
+}
 
-  function clickSearchIcon() {
-    console.log("search icon clicked");
-  }
+function clickSearchIcon() {
+  console.log('search icon clicked')
+}
 
-  function clickSearchButton() {
-    console.log("search button clicked");
-  }
+function clickSearchButton() {
+  console.log('search button clicked')
+}
 
-  function isDarkMode(): boolean {
-    const theme = useTheme();
+function isDarkMode(): boolean {
+  const theme = useTheme()
 
-    return theme.global.current.value.dark;
-  }
+  return theme.global.current.value.dark
+}
 </script>
 
 <style lang="scss" scoped>
-  .AppHeader {
-    &-SearchField {
-      margin-top: 25px;
-    }
-
-    &-Logo {
-      height: 30px;
-      margin: 5px;
-      padding-left: 20px;
-    }
+.AppHeader {
+  &-SearchField {
+    margin-top: 25px;
   }
+
+  &-Logo {
+    height: 30px;
+    margin: 5px;
+    padding-left: 20px;
+  }
+}
 </style>

@@ -1,10 +1,9 @@
 import colors from 'vuetify/lib/util/colors'
 import { defineNuxtConfig } from 'nuxt/config'
-import { aliases, fa } from 'vuetify/iconsets/fa'
-import { mdi } from 'vuetify/iconsets/mdi'
+// import { aliases, fa } from 'vuetify/iconsets/fa'
+// import { mdi } from 'vuetify/iconsets/mdi'
 
 export default defineNuxtConfig({
-
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
 
@@ -24,19 +23,75 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'apple-touch-icon', sizes: '57x57', href: '/apple-icon-57x57.png' },
-        { rel: 'apple-touch-icon', sizes: '60x60', href: '/apple-icon-60x60.png' },
-        { rel: 'apple-touch-icon', sizes: '72x72', href: '/apple-icon-72x72.png' },
-        { rel: 'apple-touch-icon', sizes: '76x76', href: '/apple-icon-76x76.png' },
-        { rel: 'apple-touch-icon', sizes: '114x114', href: '/apple-icon-114x114.png' },
-        { rel: 'apple-touch-icon', sizes: '120x120', href: '/apple-icon-120x120.png' },
-        { rel: 'apple-touch-icon', sizes: '144x144', href: '/apple-icon-144x144.png' },
-        { rel: 'apple-touch-icon', sizes: '152x152', href: '/apple-icon-152x152.png' },
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-icon-180x180.png' },
-        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/android-icon-192x192.png' },
-        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
-        { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/favicon-96x96.png' },
-        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '57x57',
+          href: '/apple-icon-57x57.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '60x60',
+          href: '/apple-icon-60x60.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '72x72',
+          href: '/apple-icon-72x72.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '76x76',
+          href: '/apple-icon-76x76.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '114x114',
+          href: '/apple-icon-114x114.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '120x120',
+          href: '/apple-icon-120x120.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '144x144',
+          href: '/apple-icon-144x144.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '152x152',
+          href: '/apple-icon-152x152.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: '/apple-icon-180x180.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '192x192',
+          href: '/android-icon-192x192.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '32x32',
+          href: '/favicon-32x32.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '96x96',
+          href: '/favicon-96x96.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '16x16',
+          href: '/favicon-16x16.png',
+        },
         { rel: 'manifest', href: '/manifest.json' },
       ],
     },
@@ -64,17 +119,16 @@ export default defineNuxtConfig({
     // https://go.nuxtjs.dev/stylelint
     '@nuxtjs/stylelint-module',
     // https://www.npmjs.com/package/@nuxtjs/fontawesome
-    ['@nuxtjs/fontawesome', {
-      icons: {
-        solid: true,
-        // here you can include other icons you need
-        brands: [
-          'faYoutube',
-          'faVimeo',
-          'faVimeoV'
-        ]
-      }
-    }],
+    [
+      '@nuxtjs/fontawesome',
+      {
+        icons: {
+          solid: true,
+          // here you can include other icons you need
+          brands: ['faYoutube', 'faVimeo', 'faVimeoV'],
+        },
+      },
+    ],
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -86,11 +140,14 @@ export default defineNuxtConfig({
     // https://go.nuxtjs.dev/content
     '@nuxt/content',
     // https://nuxt.com/modules/nuxt-vuetify
-    ['@invictus.codes/nuxt-vuetify', {
-      icons: {
-        iconfont: 'faSvg'
-      }
-    }],
+    [
+      '@invictus.codes/nuxt-vuetify',
+      {
+        icons: {
+          iconfont: 'faSvg',
+        },
+      },
+    ],
   ],
 
   // Content module configuration: https://go.nuxtjs.dev/config-content
@@ -100,7 +157,7 @@ export default defineNuxtConfig({
   vuetify: {
     /* vuetify options */
     vuetifyOptions: {
-      defaultAssets: {icons: 'fa'},
+      defaultAssets: { icons: 'fa' },
       customVariables: ['~/assets/variables.scss'],
       theme: {
         defaultTheme: 'dark',
@@ -135,7 +192,7 @@ export default defineNuxtConfig({
       styles: 'sass',
       autoImport: true,
       useVuetifyLabs: true,
-    }
+    },
   },
 
   vite: {
@@ -149,8 +206,8 @@ export default defineNuxtConfig({
     component: 'fa',
     suffix: true,
     icons: {
-      solid: true
-    }
+      solid: true,
+    },
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
