@@ -17,10 +17,10 @@ class UserModule extends VuexModule {
 
   @Action
   async getUserFromId(id: string) {
-    const user = await fetch(`/user/${id}}`);
+    const user = await fetch(`/user/${id}}`)
     user.json().then((response) => {
-      this.setUser(response);
-    });
+      this.setUser(response)
+    })
   }
 }
 

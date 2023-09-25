@@ -21,7 +21,7 @@
       </template>
     </v-list-item>
 
-    <v-divider/>
+    <v-divider />
 
     <v-list density="compact" nav>
       <v-list-item
@@ -39,28 +39,27 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MenuItem } from '~/types/menu-item.type';
+import { MenuItem } from '~/types/menu-item.type'
 
-const props = defineProps<{
+defineProps<{
   items: MenuItem[]
-}>();
+}>()
 
-const showMenu = ref(false);
-const rail = ref(true);
+const showMenu = ref(false)
+const rail = ref(true)
 
 function shrinkMenu() {
-  console.log('shrink menu child call');
-  rail.value = true;
+  console.log('shrink menu child call')
+  rail.value = true
 }
 
 function toggleMenu() {
-  console.log('toggle menu child call');
-  showMenu.value = !showMenu.value;
+  console.log('toggle menu child call')
+  showMenu.value = !showMenu.value
 }
 
 defineExpose({
   shrinkMenu,
   toggleMenu,
-});
+})
 </script>
-
