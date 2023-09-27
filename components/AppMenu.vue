@@ -49,12 +49,10 @@ const showMenu = ref(false)
 const rail = ref(true)
 
 function shrinkMenu() {
-  console.log('shrink menu child call')
   rail.value = true
 }
 
 function toggleMenu() {
-  console.log('toggle menu child call')
   showMenu.value = !showMenu.value
 }
 

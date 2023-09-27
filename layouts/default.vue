@@ -47,17 +47,14 @@ defineProps({
 })
 
 function handleShowMenuClick() {
-  console.log('toggle menu parent call')
   appMenu.value.toggleMenu()
 }
 
 function handleShowProfileClick() {
-  console.log('show profile click')
   appSideBar.value.toggleSideBar()
 }
 
 function handleContentClick() {
-  console.log('shrink menu parent call')
   appMenu.value.shrinkMenu()
 }
 </script>
