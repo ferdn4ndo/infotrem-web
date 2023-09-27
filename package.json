@@ -17,12 +17,12 @@
     "test": "jest"
   },
   "dependencies": {
-    "@nuxt/content": "^2.8.2",
+    "@nuxt/content": "^2.8.3",
     "core-js": "^3.32.2",
-    "nuxt": "^3.7.3",
+    "nuxt": "^3.7.4",
     "vue": "^3.3.4",
     "vue-loader": "^17.2.2",
-    "vuetify": "^3.3.17",
+    "vuetify": "^3.3.19",
     "vuex": "^4.1.0"
   },
   "devDependencies": {
