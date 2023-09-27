@@ -50,19 +50,19 @@ const emit = defineEmits<{
 const searchFieldText = ref('')
 
 function handleShowMenuClick() {
-  emit('toggle-show-menu');
+  emit('toggle-show-menu')
 }
 
 function handleShowProfileClick() {
-  emit('toggle-show-profile');
+  emit('toggle-show-profile')
 }
 
 function clickSearchIcon() {
-  alert('search icon clicked');
+  alert('search icon clicked')
 }
 
 function clickSearchButton() {
-  alert('search button clicked');
+  alert('search button clicked')
 }
 
 function isDarkMode(): boolean {
