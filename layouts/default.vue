@@ -18,23 +18,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { Ref, ref } from 'vue'
 import AppMenu from '~/components/AppMenu.vue'
 import AppHeader from '~/components/AppHeader.vue'
 import AppSideBar from '~/components/AppSideBar.vue'
 
-const menuItems = ref([
-  {
-    icon: 'mdi:mdi-apps',
-    title: 'Welcome',
-    path: '/',
-  },
-  {
-    icon: 'mdi:mdi-chart-bubble',
-    title: 'Inspire',
-    path: '/inspire',
-  },
-])
+import * as MenuService from "~/services/menu.service";
+import { MenuItem } from '~/types/menu-item.type';
+
+const menuItems: Ref<MenuItem[]> = ref([]);
+MenuService.getAll().then((serviceMenuItems) => {
+  menuItems.value = serviceMenuItems;
+});
 
 const appMenu = ref(null)
 const appSideBar = ref(null)
