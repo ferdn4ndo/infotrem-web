@@ -14,7 +14,7 @@ const items: MenuList = {
   },
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const getAll = async (): Promise<MenuItem[]> => {
   await sleep(10);
