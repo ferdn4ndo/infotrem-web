@@ -1,7 +1,7 @@
 type MenuItem = {
-  icon: string;
-  title: string;
-  path: string;
+  icon: string
+  title: string
+  path: string
 }
 
 export { MenuItem }

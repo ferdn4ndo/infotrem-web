@@ -1,7 +1,7 @@
-import { MenuItem } from "./menu-item.type"
+import { MenuItem } from './menu-item.type'
 
 type MenuList = {
-  [key: number]: MenuItem;
+  [key: number]: MenuItem
 }
 
 export { MenuList }

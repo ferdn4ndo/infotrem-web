@@ -23,13 +23,13 @@ import AppMenu from '~/components/AppMenu.vue'
 import AppHeader from '~/components/AppHeader.vue'
 import AppSideBar from '~/components/AppSideBar.vue'
 
-import * as MenuService from "~/services/menu.service";
-import { MenuItem } from '~/types/menu-item.type';
+import * as MenuService from '~/services/menu.service'
+import { MenuItem } from '~/types/menu-item.type'
 
-const menuItems: Ref<MenuItem[]> = ref([]);
+const menuItems: Ref<MenuItem[]> = ref([])
 MenuService.getAll().then((serviceMenuItems) => {
-  menuItems.value = serviceMenuItems;
-});
+  menuItems.value = serviceMenuItems
+})
 
 const appMenu = ref(null)
 const appSideBar = ref(null)
