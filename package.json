@@ -63,7 +63,7 @@
     "typescript": "^5.2.2",
     "vite": "^4.4.11",
     "vuex-module-decorators": "^2.0.0",
-    "webpack": "^5.88.2"
+    "webpack": "^5.89.0"
   },
   "resolutions": {
     "@nuxt/kit": "^3.7.3"
