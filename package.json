@@ -22,7 +22,7 @@
     "nuxt": "^3.8.0",
     "vue": "^3.3.4",
     "vue-loader": "^17.3.0",
-    "vuetify": "^3.3.22",
+    "vuetify": "^3.3.23",
     "vuex": "^4.1.0"
   },
   "devDependencies": {
