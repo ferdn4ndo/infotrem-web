@@ -14,10 +14,10 @@ const items: MenuList = {
   },
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const getAll = async (): Promise<MenuItem[]> => {
-  await sleep(10)
+  await sleep(10);
 
   return Object.values(items)
 }

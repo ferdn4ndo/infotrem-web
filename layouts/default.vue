@@ -8,7 +8,7 @@
     <AppMenu ref="appMenu" :items="menuItems" />
 
     <v-main ref="contentContainer" @click.stop="handleContentClick">
-      <v-container>
+      <v-container class="pa-0">
         <NuxtPage />
       </v-container>
     </v-main>
@@ -53,3 +53,10 @@ function handleContentClick() {
   appMenu.value.shrinkMenu()
 }
 </script>
+
+
+<style lang="scss">
+body {
+  font-family: 'Ubuntu', sans-serif;
+}
+</style>
