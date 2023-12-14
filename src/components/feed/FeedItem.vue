@@ -62,6 +62,8 @@ function getSubtitle() {
 </template>
 
 <style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
 .FeedItem {
   margin: 20px;
   width: 80vw;

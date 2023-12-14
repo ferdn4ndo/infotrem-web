@@ -14,6 +14,8 @@ defineProps<{
 </template>
 
 <style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
 .FeedList {
   display: flex;
   flex-direction: row;
