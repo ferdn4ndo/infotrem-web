@@ -80,7 +80,7 @@ getAll().then((responseItems) => (menuList.value = responseItems))
   width: 100vw;
   height: calc(100vh - 60px);
 
-  @media (min-width: 600px) {
+  @media (min-width: $breakpoint-medium) {
     width: 300px;
   }
 

@@ -74,7 +74,7 @@ function getSubtitle() {
   &-Media {
     flex: 0 0 100%;
 
-    @media (min-width: 1024px) {
+    @media (min-width: $breakpoint-large) {
       flex: 0 0 60%;
     }
   }
@@ -90,7 +90,7 @@ function getSubtitle() {
     flex-wrap: nowrap;
     height: 100%;
 
-    @media (min-width: 1024px) {
+    @media (min-width: $breakpoint-large) {
       flex: 0 0 40%;
       flex-wrap: wrap;
     }
@@ -115,7 +115,7 @@ function getSubtitle() {
       content: ':';
     }
 
-    @media (min-width: 960px) {
+    @media (min-width: $breakpoint-large) {
       // flex: 0 0 100%;
       max-width: 100px;
       width: 12vw;
@@ -129,7 +129,7 @@ function getSubtitle() {
     flex: 1 1 auto;
     width: 100%;
 
-    @media (min-width: 960px) {
+    @media (min-width: $breakpoint-large) {
       // flex: 0 0 100%;
       width: 100%;
     }

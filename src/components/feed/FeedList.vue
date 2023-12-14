@@ -23,7 +23,7 @@ defineProps<{
   &-Item {
     flex: 0 0 90%;
 
-    @media (min-width: 1024px) {
+    @media (min-width: $breakpoint-large) {
       flex: 0 0 80vw;
     }
   }

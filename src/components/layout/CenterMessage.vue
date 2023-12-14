@@ -14,7 +14,7 @@
   line-height: 1.5;
   max-height: 100vh;
 
-  @media (min-width: 1024px) {
+  @media (min-width: $breakpoint-large) {
     display: flex;
     place-items: center;
     padding-right: calc(var(--section-gap) / 2);
