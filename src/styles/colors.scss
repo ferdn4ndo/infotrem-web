@@ -1,0 +1,94 @@
+$color-white: #ffffff;
+$color-white-soft: #f8f8f8;
+$color-white-mute: #f2f2f2;
+
+$color-black: #181818;
+$color-black-soft: #222222;
+$color-black-mute: #282828;
+
+$color-indigo: #2c3e50;
+
+$color-divider-light-1: rgba(60, 60, 60, 0.29);
+$color-divider-light-2: rgba(60, 60, 60, 0.12);
+$color-divider-dark-1: rgba(84, 84, 84, 0.65);
+$color-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+$color-text-light-1: var($color-indigo);
+$color-text-light-2: rgba(60, 60, 60, 0.66);
+$color-text-dark-1: var($color-white);
+$color-text-dark-2: rgba(235, 235, 235, 0.64);
+
+$color-primary-light-normal: rgba(66, 124, 205, 0.9);
+$color-primary-light-hover: rgba(107, 158, 231, 0.9);
+$color-primary-light-border: rgba(18, 96, 205, 0.9);
+$color-primary-light-active: rgba(52, 109, 189, 0.9);
+
+$color-primary-dark-normal: rgba(30, 94, 184, 0.9);
+$color-primary-dark-hover: rgba(37, 110, 211, 0.9);
+$color-primary-dark-border: rgba(18, 80, 167, 0.9);
+$color-primary-dark-active: rgba(32, 91, 173, 0.9);
+
+$color-secondary-light-normal: rgba(140, 166, 201, 0.9);
+$color-secondary-light-hover: rgba(171, 202, 246, 0.9);
+$color-secondary-light-border: rgba(113, 137, 171, 0.9);
+$color-secondary-light-active: rgba(122, 143, 170, 0.9);
+
+$color-secondary-dark-normal: rgba(86, 96, 109, 0.9);
+$color-secondary-dark-hover: rgba(103, 111, 124, 0.9);
+$color-secondary-dark-border: rgba(73, 80, 91, 0.9);
+$color-secondary-dark-active: rgba(90, 102, 118, 0.9);
+
+/* semantic color variables for this project */
+:root {
+  --color-background: #{$color-white};
+  --color-background-soft: #{$color-white-soft};
+  --color-background-mute: #{$color-white-mute};
+
+  --color-border: #{$color-divider-light-2};
+  --color-border-hover: #{$color-divider-light-1};
+
+  --color-heading: #{$color-text-light-1};
+  --color-text: #{$color-text-light-1};
+
+  --color-primary-normal: ${$color-primary-light-normal};
+  --color-primary-hover: ${$color-primary-light-hover};
+  --color-primary-border: ${$color-primary-light-border};
+  --color-primary-active: ${$color-primary-light-active};
+
+  --color-secondary-normal: ${$color-secondary-light-normal};
+  --color-secondary-hover: ${$color-secondary-light-hover};
+  --color-secondary-border: ${$color-secondary-light-border};
+  --color-secondary-active: ${$color-secondary-light-active};
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #{$color-black};
+    --color-background-soft: #{$color-black-soft};
+    --color-background-mute: #{$color-black-mute};
+
+    --color-border: #{$color-divider-dark-2};
+    --color-border-hover: #{$color-divider-dark-1};
+
+    --color-heading: #{$color-text-dark-1};
+    --color-text: #{$color-text-dark-2};
+
+    --color-primary-normal: #{$color-primary-dark-normal};
+    --color-primary-hover: #{$color-primary-dark-hover};
+    --color-primary-border: #{$color-primary-dark-border};
+    --color-primary-active: #{$color-primary-dark-active};
+
+    --color-secondary-normal: #{$color-secondary-dark-normal};
+    --color-secondary-hover: #{$color-secondary-dark-hover};
+    --color-secondary-border: #{$color-secondary-dark-border};
+    --color-secondary-active: #{$color-secondary-dark-active};
+  }
+}
+
+// *,
+// *::before,
+// *::after {
+//   box-sizing: border-box;
+//   margin: 0;
+//   font-weight: normal;
+// }
