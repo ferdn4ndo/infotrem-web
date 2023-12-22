@@ -10,6 +10,7 @@ on:
 
 jobs:
   ci:
+    name: "CI Pipeline"
     runs-on: "${{ matrix.os }}"
 
     strategy:
