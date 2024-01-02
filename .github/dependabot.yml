@@ -21,6 +21,7 @@ updates:
           - "@vue/*"
           - "vue*"
           - "vite*"
+          - "@vite*"
       icons:
         patterns:
           - "@fortawesome/*"
