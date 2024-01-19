@@ -16,14 +16,22 @@ updates:
       prefix-development: "chore"
       include: "scope"
     groups:
-      vue:
+      core:
         patterns:
           - "@vue/*"
           - "vue*"
           - "vite*"
           - "@vite*"
-      icons:
-        patterns:
+          - "@tsconfig/*"
+          - "@types/*"
+          - "typescript*"
+          - "postcss-html*"
+          - "sass*"
+          - "pinia*"
+          - "cypress*"
+          - "jsdom*"
+          - "npm-run-all2*"
+          - "start-server-and-test*"
           - "@fortawesome/*"
       lint:
         patterns:
@@ -31,22 +39,6 @@ updates:
           - "stylelint*"
           - "prettier*"
           - "@rushstack/eslint*"
-      typescript:
-        patterns:
-          - "@tsconfig/*"
-          - "@types/*"
-          - "typescript*"
-      sass:
-        patterns:
-          - "postcss-html*"
-          - "sass*"
-      boilerplate:
-        patterns:
-          - "pinia*"
-          - "cypress*"
-          - "jsdom*"
-          - "npm-run-all2*"
-          - "start-server-and-test*"
 
   # Fetch and update latest `github-actions` packages
   - package-ecosystem: "github-actions"
@@ -63,3 +55,7 @@ updates:
       prefix: "fix"
       prefix-development: "chore"
       include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "*"
