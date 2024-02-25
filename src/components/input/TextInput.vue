@@ -46,6 +46,8 @@ function handleButtonClick() {
       class="TextInput-Button"
       :icon="buttonIcon"
       :scheme="scheme"
+      :round-left="true"
+      :round-right="false"
       @click="handleButtonClick"
     >
       {{ buttonText }}
@@ -53,6 +55,10 @@ function handleButtonClick() {
 
     <input
       class="TextInput-Input"
+      :class="{
+        'TextInput-Input--round-left': !displayButton || buttonSide == 'right',
+        'TextInput-Input--round-right': !displayButton || buttonSide == 'left',
+      }"
       :value="modelValue"
       :id="id"
       :name="name"
@@ -66,6 +72,8 @@ function handleButtonClick() {
       class="TextInput-Button"
       :icon="buttonIcon"
       :scheme="scheme"
+      :round-left="false"
+      :round-right="true"
       @click="handleButtonClick"
     >
       {{ buttonText }}
@@ -89,6 +97,25 @@ function handleButtonClick() {
     flex: 1 1 100%;
     box-sizing: border-box;
     border-radius: 0px;
+
+    padding: 5px;
+
+    background-color: var(--color-input-background);
+    border: 1px solid var(--color-input-border);
+
+    &--round-right {
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+
+    &--round-left {
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+
+    &:focus {
+      background-color: var(--color-input-focused);
+    }
   }
 }
 </style>
