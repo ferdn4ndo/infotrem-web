@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const profileName = ref('Fernando Constantino')
+export interface ProfileToolbarProps {
+  isCollapseOpened: boolean
+}
+
+const props = withDefaults(defineProps<ProfileToolbarProps>(), {
+  isCollapseOpened: false,
+})
+
+const emit = defineEmits<{
+  (e: 'chevron-click'): void
+}>()
+
+const profileName = ref('Fernando')
+const profileFullName = ref('Fernando Constantino')
+const profileEmail = ref('test@test.com')
 const profileAvatarUrl = ref('https://i.imgur.com/W5aQffS.jpg')
 
 function handleLogoutClick() {
@@ -11,39 +25,40 @@ function handleLogoutClick() {
 function handleProfileClick() {
   console.log('profile option clicked')
 }
+
+function handleCollapseClick() {
+  emit('chevron-click');
+}
+
+function getIcon() {
+  return props.isCollapseOpened ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down"
+}
 </script>
 
 <template>
-  <div class="ProfileToolbar">
-    <div class="ProfileToolbar-AvatarWrapper">
-      <img
-        class="ProfileToolbar-AvatarImage"
-        :src="profileAvatarUrl"
-        :alt="`Foto do perfil de ${profileName}`"
-      />
-    </div>
-    <div class="ProfileToolbar-DataWrapper">
-      <div class="ProfileToolbar-Name">
-        {{ profileName }}
+  <div class="ProfileToolbar" @click="handleCollapseClick">
+    <div class="ProfileToolbar-VisibleWrapper">
+      <div class="ProfileToolbar-AvatarWrapper">
+        <img
+          class="ProfileToolbar-AvatarImage"
+          :src="profileAvatarUrl"
+          :alt="`Foto do perfil de ${profileName}`"
+        />
       </div>
 
-      <div class="ProfileToolbar-Links">
-        <a
-          @click.stop="handleLogoutClick"
-          class="ProfileToolbar-Link"
-          title="Clique aqui para encerrar sua sessão atual."
-        >
-          Sair
-        </a>
-        <a
-          @click.stop="handleProfileClick"
-          class="ProfileToolbar-Link"
-          title="Clique aqui para ver o seu perfil."
-        >
-          Meu Perfil
-        </a>
+      <div class="ProfileToolbar-DataWrapper">
+        <div class="ProfileToolbar-Name">
+          {{ profileName }}
+        </div>
+      </div>
+
+      <div class="ProfileToolbar-ButtonWrapper">
+        <Transition name="fade" mode="out-in">
+          <font-awesome-icon :key="new Date().getTime()" :icon="getIcon()" />
+        </Transition>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -51,32 +66,72 @@ function handleProfileClick() {
 @import '@/styles/variables.scss';
 
 .ProfileToolbar {
-  height: 50px;
+  height: 40px;
   margin: 5px 10px;
+  position: relative;
+  cursor: pointer;
 
   background-color: var(--color-secondary-normal);
   border-color: var(--color-secondary-border);
   border-width: 1px;
   border-style: solid;
+  border-radius: 10px;
 
-  display: flex;
-  flex-wrap: nowrap;
+  &:hover {
+    background-color: var(--color-secondary-hover);
+  }
+
+  &:active {
+    background-color: var(--color-secondary-active);
+  }
+
+  &-VisibleWrapper {
+    z-index: $z-index-c;
+    position: relative;
+
+    display: flex;
+    flex-wrap: nowrap;
+
+    width: auto;
+    height: 100%
+  }
 
   &-AvatarWrapper {
-    flex: 0 0 50px;
+    flex: 0 0 40px;
   }
 
   &-AvatarImage {
-    width: 50px;
+    width: 40px;
+    border-radius: 10px;
+  }
+
+  &-ButtonWrapper {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+    margin-left: 10px;
   }
 
   &-DataWrapper {
     flex: 1 1 auto;
-    margin: 0 10px;
+    margin-left: 10px;
+
+    display: none;
+    align-items: center;
+
+    @media (min-width: $breakpoint-large) {
+      display: flex;
+    }
   }
 
   &-Name {
     font-size: 16px;
+    text-wrap: nowrap;
+  }
+
+  &-Email {
+    font-size: 12px;
+    color: var(--color-text-secondary);
     text-wrap: nowrap;
   }
 
@@ -92,4 +147,15 @@ function handleProfileClick() {
     cursor: pointer;
   }
 }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 </style>
