@@ -6,7 +6,9 @@ import {
   faBars,
   faUserSecret,
   faCircleInfo,
-  faMagnifyingGlass
+  faMagnifyingGlass,
+  faChevronDown,
+  faChevronUp
 } from '@fortawesome/free-solid-svg-icons'
 
 export const prepareIconsLibrary = (): void => {
@@ -15,4 +17,6 @@ export const prepareIconsLibrary = (): void => {
   library.add(faUserSecret)
   library.add(faCircleInfo)
   library.add(faMagnifyingGlass)
+  library.add(faChevronDown)
+  library.add(faChevronUp)
 }

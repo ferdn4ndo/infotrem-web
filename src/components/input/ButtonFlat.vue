@@ -2,11 +2,15 @@
 export interface Props {
   icon?: string
   scheme?: string
+  roundLeft?: boolean
+  roundRight?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   icon: 'fa-solid fa-circle-info',
-  scheme: 'primary'
+  scheme: 'primary',
+  roundLeft: true,
+  roundRight: true,
 })
 
 const emit = defineEmits<{
@@ -31,7 +35,9 @@ function isSecondary() {
     class="ButtonFlat"
     :class="{
       'ButtonFlat--primary': isPrimary(),
-      'ButtonFlat--secondary': isSecondary()
+      'ButtonFlat--secondary': isSecondary(),
+      'ButtonFlat--round-left': props.roundLeft,
+      'ButtonFlat--round-right': props.roundRight,
     }"
     @click.stop="handleButtonClick"
   >
@@ -43,9 +49,9 @@ function isSecondary() {
 @import '@/styles/variables.scss';
 
 .ButtonFlat {
-  //border-radius: 15px;
   border-width: 1px;
   border-style: solid;
+  cursor: pointer;
 
   &--primary {
     background-color: var(--color-primary-normal);
@@ -71,6 +77,16 @@ function isSecondary() {
     &:active {
       background-color: var(--color-secondary-active);
     }
+  }
+
+  &--round-left {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+
+  &--round-right {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
   }
 }
 </style>
