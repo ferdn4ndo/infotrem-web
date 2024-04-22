@@ -29,7 +29,7 @@
     "@fortawesome/vue-fontawesome": "^3.0.6",
     "pinia": "^2.1.7",
     "vue": "^3.4.23",
-    "vue-router": "^4.3.1"
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.7.2",
@@ -43,7 +43,7 @@
     "@vue/eslint-config-typescript": "^13.0.0",
     "@vue/test-utils": "^2.4.5",
     "@vue/tsconfig": "^0.5.1",
-    "cypress": "^13.7.3",
+    "cypress": "^13.8.0",
     "eslint": "^8.57.0",
     "eslint-plugin-cypress": "^2.15.1",
     "eslint-plugin-vue": "^9.22.0",
@@ -58,7 +58,7 @@
     "stylelint-config-recommended-vue": "^1.5.0",
     "stylelint-config-standard": "^36.0.0",
     "typescript": "~5.4.5",
-    "vite": "^5.2.9",
+    "vite": "^5.2.10",
     "vitest": "^1.5.0",
     "vue-tsc": "^2.0.13"
   }
