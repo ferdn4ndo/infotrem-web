@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "lint:js": "eslint ./src --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint ./src --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "lint:style": "stylelint \"src/**/*.{css,scss,sass,html,vue}\"",
     "lint:prettier": "prettier --check ./src",
     "lint": "yarn lint:js && yarn lint:style && yarn lint:prettier",
