@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { FeedMediaItem } from '@/types/feed-media-item.type'
-import FeedItem from '@/components/feed/FeedItem.vue'
+  import { FeedMediaItem } from '@/types/feed-media-item.type'
+  import FeedItem from '@/components/feed/FeedItem.vue'
 
-defineProps<{
-  items: FeedMediaItem[]
-}>()
+  defineProps<{
+    items: FeedMediaItem[]
+  }>()
 </script>
 
 <template>
@@ -14,20 +14,20 @@ defineProps<{
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+  @import '@/styles/variables.scss';
 
-.FeedList {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  .FeedList {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
 
-  &-Item {
-    flex: 0 0 90%;
+    &-Item {
+      flex: 0 0 90%;
 
-    @media (min-width: $breakpoint-large) {
-      flex: 0 0 80vw;
+      @media (min-width: $breakpoint-large) {
+        flex: 0 0 80vw;
+      }
     }
   }
-}
 </style>

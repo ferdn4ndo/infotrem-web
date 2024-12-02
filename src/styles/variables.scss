@@ -1,2 +1,8 @@
 $breakpoint-large: 1080px;
 $breakpoint-medium: 720px;
+
+$z-index-a: 0;
+$z-index-b: 9; // Overlapping elements on the same page
+$z-index-c: 99; // Page overlay (like a color fade)
+$z-index-d: 999; // Modals
+$z-index-e: 9999; // Confirmation messages and toasts
