@@ -71,8 +71,6 @@ function getIcon() {
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .ProfileCollapseCard {
   background-color: var(--color-secondary-normal);
   border-color: var(--color-secondary-border);
@@ -132,5 +130,4 @@ function getIcon() {
     padding-left: 10px;
   }
 }
-
 </style>

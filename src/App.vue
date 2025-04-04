@@ -76,20 +76,18 @@
 </style>
 
 <style lang="scss" scoped>
-  @import '@/styles/variables.scss';
+.MainContent {
+  margin-top: 60px;
 
-  .MainContent {
-    margin-top: 60px;
-
-    &-Header {
-      z-index: $z-index-b;
-    }
-
-    &-Collapse {
-      z-index: $z-index-a;
-      position: fixed;
-      top: 60px;
-      left: calc(100% - 250px);
-    }
+  &-Header {
+    z-index: $z-index-b;
   }
+
+  &-Collapse {
+    z-index: $z-index-a;
+    position: fixed;
+    top: 60px;
+    left: calc(100% - 250px);
+  }
+}
 </style>

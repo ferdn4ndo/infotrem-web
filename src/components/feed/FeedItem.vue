@@ -34,48 +34,46 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/styles/variables.scss';
+.FeedItem {
+  &-Title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: -4px;
+  }
 
-  .FeedItem {
-    &-Title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: -4px;
-    }
+  &-SubTitle {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+  }
 
-    &-SubTitle {
-      font-size: 10px;
-      color: var(--color-text-secondary);
-    }
+  &-ContentWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 5px;
+    justify-content: space-between;
+  }
 
-    &-ContentWrapper {
-      display: flex;
-      flex-wrap: wrap;
-      border-top: 1px solid var(--color-border);
-      padding-top: 10px;
-      margin-top: 5px;
-      justify-content: space-between;
-    }
+  &-Media {
+    flex: 0 0 100%;
 
-    &-Media {
-      flex: 0 0 100%;
-
-      @media (min-width: $breakpoint-large) {
-        flex: 0 0 60%;
-      }
-    }
-
-    &-Image {
-      width: 100%;
-    }
-
-    &-Data {
-      flex: 0 0 100%;
-      height: 100%;
-
-      @media (min-width: $breakpoint-large) {
-        flex: 0 0 39%;
-      }
+    @media (min-width: $breakpoint-large) {
+      flex: 0 0 60%;
     }
   }
+
+  &-Image {
+    width: 100%;
+  }
+
+  &-Data {
+    flex: 0 0 100%;
+    height: 100%;
+
+    @media (min-width: $breakpoint-large) {
+      flex: 0 0 39%;
+    }
+  }
+}
 </style>

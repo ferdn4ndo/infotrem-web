@@ -46,8 +46,6 @@ function isSecondary() {
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .ButtonFlat {
   border-width: 1px;
   border-style: solid;

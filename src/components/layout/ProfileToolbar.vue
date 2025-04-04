@@ -63,8 +63,6 @@ function getIcon() {
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .ProfileToolbar {
   height: 40px;
   margin: 5px 10px;

@@ -14,20 +14,20 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as vars;
 
-  .FeedList {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+.FeedList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
 
-    &-Item {
-      flex: 0 0 90%;
+  &-Item {
+    flex: 0 0 90%;
 
-      @media (min-width: $breakpoint-large) {
-        flex: 0 0 80vw;
-      }
+    @media (min-width: vars.$breakpoint-large) {
+      flex: 0 0 80vw;
     }
   }
+}
 </style>

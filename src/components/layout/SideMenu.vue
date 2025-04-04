@@ -71,25 +71,20 @@ getAll().then((responseItems) => (menuList.value = responseItems))
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .SideMenu {
   position: fixed;
   top: 60px;
   left: 0;
   width: 100vw;
   height: calc(100vh - 60px);
+  color: var(--color-heading);
+  background-color: var(--color-background-soft);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 99;
 
   @media (min-width: $breakpoint-medium) {
     width: 300px;
   }
-
-  color: var(--color-heading);
-
-  background-color: var(--color-background-soft);
-  border-bottom: 1px solid var(--color-border);
-
-  z-index: 99;
 
   &-SearchContainer {
     padding: 20px;

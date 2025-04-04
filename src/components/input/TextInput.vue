@@ -82,8 +82,6 @@ function handleButtonClick() {
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .TextInput {
   width: 100%;
   display: flex;

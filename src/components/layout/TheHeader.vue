@@ -77,56 +77,54 @@
 </template>
 
 <style lang="scss" scoped>
-  @import '@/styles/variables.scss';
+.TheHeader {
+  position: fixed;
+  top: 0;
+  height: 60px;
+  width: 100%;
 
-  .TheHeader {
-    position: fixed;
-    top: 0;
-    height: 60px;
-    width: 100%;
+  color: var(--color-heading);
 
-    color: var(--color-heading);
+  background-color: var(--color-background-soft);
+  border-bottom: 1px solid var(--color-border);
 
-    background-color: var(--color-background-soft);
-    border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
+  z-index: 999;
+
+  &-LeftContainer {
+    justify-self: flex-start;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-
-    z-index: 999;
-
-    &-LeftContainer {
-      justify-self: flex-start;
-      display: flex;
-      align-items: center;
-    }
-
-    &-CentralContainer {
-      flex: 1 1 100%;
-      margin: 0 50px;
-    }
-
-    &-RightContainer {
-      justify-self: flex-end;
-    }
-
-    &-Title {
-      display: inline-block;
-    }
-
-    &-Logo {
-      height: 30px;
-    }
-
-    &-Button {
-      margin: 10px;
-      height: 30px;
-      width: 30px;
-    }
-
-    &-LinksWrapper {
-      display: inline-block;
-    }
   }
+
+  &-CentralContainer {
+    flex: 1 1 100%;
+    margin: 0 50px;
+  }
+
+  &-RightContainer {
+    justify-self: flex-end;
+  }
+
+  &-Title {
+    display: inline-block;
+  }
+
+  &-Logo {
+    height: 30px;
+  }
+
+  &-Button {
+    margin: 10px;
+    height: 30px;
+    width: 30px;
+  }
+
+  &-LinksWrapper {
+    display: inline-block;
+  }
+}
 </style>
