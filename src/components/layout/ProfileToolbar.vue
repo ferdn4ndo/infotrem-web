@@ -6,7 +6,7 @@ export interface ProfileToolbarProps {
 }
 
 const props = withDefaults(defineProps<ProfileToolbarProps>(), {
-  isCollapseOpened: false,
+  isCollapseOpened: false
 })
 
 const emit = defineEmits<{
@@ -14,24 +14,14 @@ const emit = defineEmits<{
 }>()
 
 const profileName = ref('Fernando')
-const profileFullName = ref('Fernando Constantino')
-const profileEmail = ref('test@test.com')
 const profileAvatarUrl = ref('https://i.imgur.com/W5aQffS.jpg')
 
-function handleLogoutClick() {
-  console.log('logout option clicked')
-}
-
-function handleProfileClick() {
-  console.log('profile option clicked')
-}
-
 function handleCollapseClick() {
-  emit('chevron-click');
+  emit('chevron-click')
 }
 
 function getIcon() {
-  return props.isCollapseOpened ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down"
+  return props.isCollapseOpened ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'
 }
 </script>
 
@@ -58,7 +48,6 @@ function getIcon() {
         </Transition>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -91,7 +80,7 @@ function getIcon() {
     flex-wrap: nowrap;
 
     width: auto;
-    height: 100%
+    height: 100%;
   }
 
   &-AvatarWrapper {
@@ -155,5 +144,4 @@ function getIcon() {
 .fade-leave-to {
   opacity: 0;
 }
-
 </style>

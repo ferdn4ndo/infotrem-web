@@ -1,13 +1,13 @@
 <script setup lang="ts">
-  import { type FeedMediaItem } from '@/types/feed-media-item.type'
+import { type FeedMediaItem } from '@/types/feed-media-item.type'
 
-  defineProps<{
-    mediaItem: FeedMediaItem
-  }>()
+defineProps<{
+  mediaItem: FeedMediaItem
+}>()
 
-  function displayDate(inputDate: string | null) {
-    return !inputDate ? '-DESCONHECIDO-' : inputDate
-  }
+function displayDate(inputDate: string | null) {
+  return !inputDate ? '-DESCONHECIDO-' : inputDate
+}
 </script>
 
 <template>

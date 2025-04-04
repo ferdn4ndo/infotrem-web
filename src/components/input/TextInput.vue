@@ -57,7 +57,7 @@ function handleButtonClick() {
       class="TextInput-Input"
       :class="{
         'TextInput-Input--round-left': !displayButton || buttonSide == 'right',
-        'TextInput-Input--round-right': !displayButton || buttonSide == 'left',
+        'TextInput-Input--round-right': !displayButton || buttonSide == 'left'
       }"
       :value="modelValue"
       :id="id"

@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { type Ref, ref } from 'vue'
 import { getAll } from '@/services/menu.service'
+import { useRouter } from 'vue-router'
 import type { MenuItem } from '~/types/menu-item.type'
 import type { MenuList } from '~/types/meny-list.type'
 import TextInput from '../input/TextInput.vue'
 
 const searchMenuText = ref('')
-
+const router = useRouter()
 function handleSearchMenuInputChanged() {
   console.log('search menu text: ' + searchMenuText.value)
 }
 
 function handleMenuItemClicked(item: MenuItem) {
-  console.log('menu item clicked: ' + item)
+  console.log('menu item clicked')
+  console.log(item)
+
+  if (item.path !== null) {
+    router.push(item.path)
+  }
 }
 
 const menuList: Ref<MenuList> = ref([])
@@ -80,6 +86,7 @@ getAll().then((responseItems) => (menuList.value = responseItems))
   color: var(--color-heading);
   background-color: var(--color-background-soft);
   border-bottom: 1px solid var(--color-border);
+  filter: drop-shadow(0px 0 10px var(--color-shadow));
   z-index: 99;
 
   @media (min-width: $breakpoint-medium) {
@@ -98,6 +105,8 @@ getAll().then((responseItems) => (menuList.value = responseItems))
   }
 
   &-Divider {
+    height: 1px;
+    border: 0px;
     border-bottom: 1px solid var(--color-border);
     margin: 20px 10px;
   }

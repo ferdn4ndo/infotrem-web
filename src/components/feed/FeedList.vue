@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  import { FeedMediaItem } from '@/types/feed-media-item.type'
-  import FeedItem from '@/components/feed/FeedItem.vue'
+import { FeedMediaItem } from '@/types/feed-media-item.type'
+import FeedItem from '@/components/feed/FeedItem.vue'
 
-  defineProps<{
-    items: FeedMediaItem[]
-  }>()
+defineProps<{
+  items: FeedMediaItem[]
+}>()
 </script>
 
 <template>

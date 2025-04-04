@@ -1,16 +1,16 @@
 <script setup lang="ts">
-  import TheCard from '@/components/layout/TheCard.vue'
-  import MediaBasicInfoTable from '@/components/table/MediaBasicInfoTable.vue'
-  import { type FeedMediaItem } from '@/types/feed-media-item.type'
+import TheCard from '@/components/layout/TheCard.vue'
+import MediaBasicInfoTable from '@/components/table/MediaBasicInfoTable.vue'
+import { type FeedMediaItem } from '@/types/feed-media-item.type'
 
-  defineProps<{
-    mediaItem: FeedMediaItem
-  }>()
+defineProps<{
+  mediaItem: FeedMediaItem
+}>()
 
-  function getSubtitle() {
-    // ToDo: process date
-    return 'há 12 horas'
-  }
+function getSubtitle() {
+  // ToDo: process date
+  return 'há 12 horas'
+}
 </script>
 
 <template>

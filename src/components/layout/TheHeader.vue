@@ -1,43 +1,43 @@
 <script setup lang="ts">
-  import ButtonFlat from '@/components/input/ButtonFlat.vue'
-  import TextInput from '@/components/input/TextInput.vue'
-  import ProfileToolbar from '@/components/layout/ProfileToolbar.vue'
-  import { ref } from 'vue'
+import ButtonFlat from '@/components/input/ButtonFlat.vue'
+import TextInput from '@/components/input/TextInput.vue'
+import ProfileToolbar from '@/components/layout/ProfileToolbar.vue'
+import { ref } from 'vue'
 
-  export interface TheHeaderProps {
-    msg: string
-    isProfileCollapseOpened: boolean
+export interface TheHeaderProps {
+  msg: string
+  isProfileCollapseOpened: boolean
+}
+
+withDefaults(defineProps<TheHeaderProps>(), {
+  msg: 'Test',
+  isProfileCollapseOpened: false
+})
+
+const searchBarText = ref('')
+
+const emit = defineEmits<{
+  (e: 'menuButtonClick'): void
+  (e: 'profileChevronClick'): void
+}>()
+
+function handleMenuButtonClick() {
+  console.log('Menu button clicked')
+  emit('menuButtonClick')
+}
+
+function handleProfileChevronClick() {
+  console.log('Profile chevron click')
+  emit('profileChevronClick')
+}
+
+function isDarkMode() {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
   }
 
-  withDefaults(defineProps<TheHeaderProps>(), {
-    msg: 'Test',
-    isProfileCollapseOpened: false,
-  })
-
-  const searchBarText = ref('')
-
-  const emit = defineEmits<{
-    (e: 'menuButtonClick'): void
-    (e: 'profileChevronClick'): void
-  }>()
-
-  function handleMenuButtonClick() {
-    console.log('Menu button clicked')
-    emit('menuButtonClick')
-  }
-
-  function handleProfileChevronClick() {
-    console.log('Profile chevron click')
-    emit('profileChevronClick')
-  }
-
-  function isDarkMode() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return true
-    }
-
-    return false
-  }
+  return false
+}
 </script>
 
 <template>

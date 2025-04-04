@@ -5,7 +5,6 @@ const profileName = ref('Fernando')
 const profileFullName = ref('Fernando Constantino')
 const profileEmail = ref('test@test.com')
 const profileAvatarUrl = ref('https://i.imgur.com/W5aQffS.jpg')
-const showCollapse = ref(false);
 
 function handleLogoutClick() {
   console.log('logout option clicked')
@@ -13,14 +12,6 @@ function handleLogoutClick() {
 
 function handleProfileClick() {
   console.log('profile option clicked')
-}
-
-function handleCollapseClick() {
-  showCollapse.value = !showCollapse.value;
-}
-
-function getIcon() {
-  return showCollapse.value ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down"
 }
 </script>
 

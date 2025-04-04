@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<Props>(), {
   icon: 'fa-solid fa-circle-info',
   scheme: 'primary',
   roundLeft: true,
-  roundRight: true,
+  roundRight: true
 })
 
 const emit = defineEmits<{
@@ -37,7 +37,7 @@ function isSecondary() {
       'ButtonFlat--primary': isPrimary(),
       'ButtonFlat--secondary': isSecondary(),
       'ButtonFlat--round-left': props.roundLeft,
-      'ButtonFlat--round-right': props.roundRight,
+      'ButtonFlat--round-right': props.roundRight
     }"
     @click.stop="handleButtonClick"
   >
