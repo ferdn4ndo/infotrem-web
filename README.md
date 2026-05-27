@@ -1,68 +1,47 @@
-# infotrem-web
+# InfoTrem Web
 
-This template should help get you started developing with Vue 3 in Vite.
+InfoTrem Web is a Vue 3 + Vite frontend for browsing railway-related media, menu navigation, and profile/header UI experiments. The current app uses local mock services for feed and menu data while the UI structure, routing, styling, and test tooling are being built out.
 
-## Recommended IDE Setup
+## Requirements
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
-
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
-
-1. Disable the built-in TypeScript Extension
-    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
+- Node.js `>=26 <27`
+- Yarn 1.x via Corepack or a compatible global Yarn install
 
 ```sh
-npm install
+corepack enable
+yarn install
 ```
 
-### Compile and Hot-Reload for Development
+## Common Commands
 
 ```sh
-npm run dev
+yarn dev
+yarn build
+yarn lint
+yarn test
+yarn test:e2e:dev
 ```
 
-### Type-Check, Compile and Minify for Production
+`yarn build` runs `vue-tsc` type checking and then builds with Vite. `yarn lint` runs ESLint, Stylelint, and Prettier checks. CI runs install, lint, and unit tests on Ubuntu with Node 26.
 
-```sh
-npm run build
-```
+## Project Layout
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+- `src/main.ts` boots Vue, Pinia, Vue Router, global SCSS, and FontAwesome.
+- `src/App.vue` owns the app shell: fixed header, side menu toggle, profile collapse, and routed content.
+- `src/router/index.ts` defines the current `/`, `/feed`, and `/about` routes.
+- `src/services/` contains local async mock data services for feed and menu content.
+- `src/components/` contains layout, input, feed, table, and starter Vue components.
+- `src/styles/` defines global CSS variables, breakpoints, and shared SCSS variables.
+- `cypress/` contains the Cypress e2e scaffold.
+- `docs/` contains deeper project notes for humans and agents.
 
-```sh
-npm run test:unit
-```
+## Documentation
 
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
+- `AGENTS.md` documents repo-specific guidance for AI/code agents.
+- `docs/architecture.md` describes the runtime architecture and source layout.
+- `docs/development.md` covers local setup, conventions, and coding notes.
+- `docs/testing-and-ci.md` covers tests, linting, CI, and current verification caveats.
 
-```sh
-npm run test:e2e:dev
-```
+## Tooling Notes
 
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
-
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
-
-```sh
-npm run build
-npm run test:e2e
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+The project has moved to ESLint flat config in `eslint.config.js`. TypeScript path aliases are configured for `@/*` and `~/*` in app/test configs and should point at `src/*`; Vite also maps `@` to `src`.

@@ -4,20 +4,27 @@ import type { MenuList } from '~/types/meny-list.type'
 const items: MenuList = {
   1: {
     id: 1,
-    icon: 'mdi:mdi-apps',
-    title: 'Feed',
+    icon: 'fa-home',
+    title: 'Home',
     path: '/',
     children: null
   },
   2: {
     id: 2,
-    icon: 'mdi:mdi-chart-bubble',
+    icon: 'fa-rss',
+    title: 'Feed',
+    path: '/feed',
+    children: null
+  },
+  3: {
+    id: 3,
+    icon: 'fa-train',
     title: 'Material Rodante',
     path: null,
     children: {
       1: {
         id: 3,
-        icon: 'fa-solid fa-circle-inf',
+        icon: 'fa-gears',
         title: 'Locomotivas',
         path: '/inspire',
         children: null

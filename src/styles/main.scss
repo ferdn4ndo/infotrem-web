@@ -1,5 +1,4 @@
-@import './colors.scss';
-@import './variables.scss';
+@use './colors.scss' as colors;
 
 :root {
   color-scheme: light dark;

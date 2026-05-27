@@ -4,19 +4,31 @@ import TextInput from '@/components/input/TextInput.vue'
 import ProfileToolbar from '@/components/layout/ProfileToolbar.vue'
 import { ref } from 'vue'
 
-defineProps<{
+export interface TheHeaderProps {
   msg: string
-}>()
+  isProfileCollapseOpened: boolean
+}
+
+withDefaults(defineProps<TheHeaderProps>(), {
+  msg: 'Test',
+  isProfileCollapseOpened: false
+})
 
 const searchBarText = ref('')
 
 const emit = defineEmits<{
   (e: 'menuButtonClick'): void
+  (e: 'profileChevronClick'): void
 }>()
 
 function handleMenuButtonClick() {
   console.log('Menu button clicked')
   emit('menuButtonClick')
+}
+
+function handleProfileChevronClick() {
+  console.log('Profile chevron click')
+  emit('profileChevronClick')
 }
 
 function isDarkMode() {
@@ -39,6 +51,7 @@ function isDarkMode() {
       />
 
       <img v-if="isDarkMode()" alt="InfoTrem logo" class="TheHeader-Logo" src="/logo-dark-bg.svg" />
+
       <img v-else alt="InfoTrem logo" class="TheHeader-Logo" src="/logo-light-bg.svg" />
     </div>
 
@@ -55,14 +68,15 @@ function isDarkMode() {
     </div>
 
     <div class="TheHeader-RightContainer">
-      <ProfileToolbar />
+      <ProfileToolbar
+        @chevron-click="handleProfileChevronClick"
+        :is-collapse-opened="isProfileCollapseOpened"
+      />
     </div>
   </header>
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
 .TheHeader {
   position: fixed;
   top: 0;
@@ -106,6 +120,7 @@ function isDarkMode() {
   &-Button {
     margin: 10px;
     height: 30px;
+    width: 30px;
   }
 
   &-LinksWrapper {

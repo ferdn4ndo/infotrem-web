@@ -14,7 +14,7 @@ defineProps<{
 </template>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as vars;
 
 .FeedList {
   display: flex;
@@ -25,7 +25,7 @@ defineProps<{
   &-Item {
     flex: 0 0 90%;
 
-    @media (min-width: $breakpoint-large) {
+    @media (min-width: vars.$breakpoint-large) {
       flex: 0 0 80vw;
     }
   }
