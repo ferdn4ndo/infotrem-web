@@ -57,3 +57,6 @@ Use `yarn --frozen-lockfile` in CI or when checking that `yarn.lock` is already 
 3. Run `yarn lint` after code or docs formatting changes when Node 26 is available.
 4. Run `yarn test` for logic, component, or dependency changes.
 5. Do not commit generated artifacts such as `dist`, `coverage`, Cypress screenshots/videos, or `node_modules`.
+
+For backend integration work, read `docs/backend-integration.md` before changing
+API services, auth state, route guards, or backend-backed views.

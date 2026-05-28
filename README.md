@@ -39,6 +39,7 @@ yarn test:e2e:dev
 
 - `AGENTS.md` documents repo-specific guidance for AI/code agents.
 - `docs/architecture.md` describes the runtime architecture and source layout.
+- `docs/backend-integration.md` describes the planned API client, auth, routing, and service integration strategy.
 - `docs/development.md` covers local setup, conventions, and coding notes.
 - `docs/testing-and-ci.md` covers tests, linting, CI, and current verification caveats.
 

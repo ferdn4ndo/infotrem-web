@@ -5,4 +5,4 @@ type User = {
   avatarUrl: string
 }
 
-export { User }
+export type { User }

@@ -26,10 +26,31 @@ const items: MenuList = {
         id: 3,
         icon: 'fa-gears',
         title: 'Locomotivas',
-        path: '/inspire',
+        path: '/resources/locomotives',
         children: null
       }
     }
+  },
+  4: {
+    id: 4,
+    icon: 'fa-photo-film',
+    title: 'Mídia',
+    path: '/resources/media',
+    children: null
+  },
+  5: {
+    id: 5,
+    icon: 'fa-map',
+    title: 'Mapa',
+    path: '/map',
+    children: null
+  },
+  6: {
+    id: 6,
+    icon: 'fa-magnifying-glass',
+    title: 'Busca',
+    path: '/search',
+    children: null
   }
 }
 

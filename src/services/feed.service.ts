@@ -1,4 +1,6 @@
 import type { FeedMediaItem } from '~/types/feed-media-item.type'
+import { listMedia } from '@/services/api/media.api'
+import type { MediaRow } from '@/types/domain/media.type'
 
 const items: FeedMediaItem[] = [
   {
@@ -75,8 +77,26 @@ const items: FeedMediaItem[] = [
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const getAll = async (): Promise<FeedMediaItem[]> => {
-  await sleep(10)
+function mediaRowToFeedItem(row: MediaRow): FeedMediaItem {
+  return {
+    title: String(row.title ?? row.name ?? row.id),
+    mediaUrl: String(row.thumbnail_url ?? row.media_url ?? row.source ?? '/logo-light-bg.svg'),
+    mediaAlt: String(row.description ?? row.title ?? 'Mídia InfoTrem'),
+    description: String(row.description ?? '-'),
+    mediaDate: row.media_date ? String(row.media_date) : null,
+    author: String(row.author ?? row.created_by_id ?? '-'),
+    source: String(row.source ?? '#')
+  }
+}
 
-  return Object.values(items)
+export const getAll = async (): Promise<FeedMediaItem[]> => {
+  try {
+    const response = await listMedia({ limit: 50 })
+
+    return response.items.map(mediaRowToFeedItem)
+  } catch {
+    await sleep(10)
+
+    return Object.values(items)
+  }
 }

@@ -8,4 +8,4 @@ type FeedMediaItem = {
   mediaDate: string | null
 }
 
-export { FeedMediaItem }
+export type { FeedMediaItem }

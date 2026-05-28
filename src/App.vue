@@ -2,10 +2,16 @@
 import ProfileCollapseCard from '@/components/layout/ProfileCollapseCard.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import SideMenu from './components/layout/SideMenu.vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.store'
 
 const showSideMenu = ref(false)
 const showProfileCollapseCard = ref(false)
+const auth = useAuthStore()
+
+onMounted(() => {
+  auth.refreshMe().catch(() => auth.logout())
+})
 
 function handleHeaderMenuButtonClick() {
   showSideMenu.value = !showSideMenu.value
