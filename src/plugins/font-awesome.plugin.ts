@@ -12,7 +12,9 @@ import {
   faHome,
   faTrain,
   faGears,
-  faRss
+  faRss,
+  faMap,
+  faPhotoFilm
 } from '@fortawesome/free-solid-svg-icons'
 
 export const prepareIconsLibrary = (): void => {
@@ -27,4 +29,6 @@ export const prepareIconsLibrary = (): void => {
   library.add(faTrain)
   library.add(faGears)
   library.add(faRss)
+  library.add(faMap)
+  library.add(faPhotoFilm)
 }

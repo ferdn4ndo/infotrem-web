@@ -3,6 +3,9 @@ import ButtonFlat from '@/components/input/ButtonFlat.vue'
 import TextInput from '@/components/input/TextInput.vue'
 import ProfileToolbar from '@/components/layout/ProfileToolbar.vue'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 export interface TheHeaderProps {
   msg: string
@@ -38,6 +41,14 @@ function isDarkMode() {
 
   return false
 }
+
+function handleSearchSubmit() {
+  const q = searchBarText.value.trim()
+
+  if (q) {
+    router.push({ name: 'search', query: { q } })
+  }
+}
 </script>
 
 <template>
@@ -55,7 +66,7 @@ function isDarkMode() {
       <img v-else alt="InfoTrem logo" class="TheHeader-Logo" src="/logo-light-bg.svg" />
     </div>
 
-    <div class="TheHeader-CentralContainer">
+    <form class="TheHeader-CentralContainer" @submit.prevent="handleSearchSubmit">
       <TextInput
         v-model="searchBarText"
         placeholder="Procurar (ex: G12 3669, FNB 629692-1, ZPV, etc)"
@@ -65,7 +76,7 @@ function isDarkMode() {
         button-icon="fa-solid fa-magnifying-glass"
         button-side="right"
       />
-    </div>
+    </form>
 
     <div class="TheHeader-RightContainer">
       <ProfileToolbar

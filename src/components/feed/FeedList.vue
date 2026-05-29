@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FeedMediaItem } from '@/types/feed-media-item.type'
+import type { FeedMediaItem } from '@/types/feed-media-item.type'
 import FeedItem from '@/components/feed/FeedItem.vue'
 
 defineProps<{

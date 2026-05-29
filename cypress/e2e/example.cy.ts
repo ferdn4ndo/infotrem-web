@@ -1,8 +1,7 @@
-// https://on.cypress.io/api
-
-describe('My First Test', () => {
-  it('visits the app root url', () => {
+describe('InfoTrem integration smoke', () => {
+  it('loads the SPA and reaches the API through the frontend proxy', () => {
     cy.visit('/')
-    cy.contains('h1', 'You did it!')
+    cy.get('#app').should('exist')
+    cy.request('/api/health').its('status').should('eq', 200)
   })
 })

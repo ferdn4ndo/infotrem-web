@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store'
 
-const profileName = ref('Fernando')
-const profileFullName = ref('Fernando Constantino')
-const profileEmail = ref('test@test.com')
-const profileAvatarUrl = ref('https://i.imgur.com/W5aQffS.jpg')
+const router = useRouter()
+const auth = useAuthStore()
+const profileName = computed(() => auth.displayName)
+const profileFullName = computed(() => auth.displayName)
+const profileEmail = computed(() =>
+  String(auth.user?.email ?? 'Faça login para acessar seu perfil')
+)
+const profileAvatarUrl = computed(() => String(auth.user?.avatar_url ?? '/logo-light-bg.svg'))
 
 function handleLogoutClick() {
-  console.log('logout option clicked')
+  auth.logout()
+  router.push({ name: 'home' })
 }
 
 function handleProfileClick() {
-  console.log('profile option clicked')
+  router.push({ name: auth.isLoggedIn ? 'me' : 'login' })
 }
 </script>
 

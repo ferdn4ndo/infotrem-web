@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth.store'
 
 export interface ProfileToolbarProps {
   isCollapseOpened: boolean
@@ -13,8 +14,9 @@ const emit = defineEmits<{
   (e: 'chevron-click'): void
 }>()
 
-const profileName = ref('Fernando')
-const profileAvatarUrl = ref('https://i.imgur.com/W5aQffS.jpg')
+const auth = useAuthStore()
+const profileName = computed(() => auth.displayName)
+const profileAvatarUrl = computed(() => String(auth.user?.avatar_url ?? '/logo-light-bg.svg'))
 
 function handleCollapseClick() {
   emit('chevron-click')

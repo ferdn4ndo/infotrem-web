@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { ref } from 'vue'
+import type { Ref } from 'vue'
 import FeedList from '../components/feed/FeedList.vue'
 
 import * as FeedService from '@/services/feed.service'
