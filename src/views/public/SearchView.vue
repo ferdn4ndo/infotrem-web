@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
-import EntityCard from '@/components/common/EntityCard.vue'
-import { resourceForEntityType } from '@/services/api/resources'
+import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import { routeForEntityRow } from '@/services/api/entity-routing'
 import * as SearchApi from '@/services/api/search.api'
 
 const route = useRoute()
@@ -14,6 +14,16 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 
 const trimmedQuery = computed(() => query.value.trim())
+const groupedItems = computed(() => {
+  const groups = new Map<string, SearchApi.SearchResultItem[]>()
+
+  for (const item of items.value) {
+    const label = labelFor(item)
+    groups.set(label, [...(groups.get(label) ?? []), item])
+  }
+
+  return Array.from(groups, ([label, groupItems]) => ({ label, items: groupItems }))
+})
 
 watchEffect(async () => {
   const q = String(route.query.q ?? '').trim()
@@ -41,14 +51,8 @@ function submitSearch() {
   router.push({ name: 'search', query: { q: trimmedQuery.value } })
 }
 
-function routeFor(item: SearchApi.SearchResultItem) {
-  const resource = resourceForEntityType(String(item.entity_type))
-
-  if (!resource || !item.id) {
-    return null
-  }
-
-  return { name: 'resource-detail', params: { resource: resource.key, id: String(item.id) } }
+function labelFor(item: SearchApi.SearchResultItem) {
+  return routeForEntityRow(item).label
 }
 </script>
 
@@ -56,13 +60,14 @@ function routeFor(item: SearchApi.SearchResultItem) {
   <main class="SearchView">
     <h1>Busca</h1>
 
-    <form class="SearchView-Form" @submit.prevent="submitSearch">
+    <form class="SearchView-Form" data-cy="search-form" @submit.prevent="submitSearch">
       <input
         v-model="query"
         class="SearchView-Input"
+        data-cy="search-input"
         placeholder="Busque por locais, material rodante, mídia..."
       />
-      <button class="SearchView-Button" type="submit">Buscar</button>
+      <button class="SearchView-Button" data-cy="search-submit" type="submit">Buscar</button>
     </form>
 
     <p v-if="isLoading">Buscando...</p>
@@ -70,15 +75,17 @@ function routeFor(item: SearchApi.SearchResultItem) {
     <p v-else-if="route.query.q && items.length === 0">Nenhum resultado encontrado.</p>
 
     <section class="SearchView-Results">
-      <component
-        :is="routeFor(item) ? RouterLink : 'div'"
-        v-for="item in items"
-        :key="`${item.entity_type}-${item.id}`"
-        class="SearchView-Result"
-        :to="routeFor(item) ?? undefined"
-      >
-        <EntityCard :item="item" :title-fields="['title', 'name', 'code', 'number', 'id']" />
-      </component>
+      <section v-for="group in groupedItems" :key="group.label" class="SearchView-Group">
+        <h2>{{ group.label }}</h2>
+        <RoutableEntitySummaryCard
+          v-for="item in group.items"
+          :key="`${item.entity_type}-${item.id}`"
+          class="SearchView-Result"
+          data-cy="search-result"
+          :item="item"
+          :title-fields="['title', 'name', 'code', 'number', 'id']"
+        />
+      </section>
     </section>
   </main>
 </template>
@@ -104,12 +111,24 @@ function routeFor(item: SearchApi.SearchResultItem) {
 
   &-Results {
     display: grid;
-    gap: 16px;
+    gap: 24px;
+  }
+
+  &-Group {
+    display: grid;
+    gap: 12px;
   }
 
   &-Result {
+    display: grid;
+    gap: 8px;
     color: inherit;
     text-decoration: none;
+  }
+
+  &-Type,
+  &-Reason {
+    display: block;
   }
 }
 </style>

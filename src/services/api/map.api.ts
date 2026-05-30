@@ -12,6 +12,7 @@ export type MapQuery = {
 export type MapResult = {
   items: Array<EntityRow & { entity_type: string }>
   bounds: EntityRow
+  query: EntityRow
 }
 
 export function getMapData(query: MapQuery) {

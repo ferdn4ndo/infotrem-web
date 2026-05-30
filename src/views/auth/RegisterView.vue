@@ -19,8 +19,10 @@ async function submitRegister() {
     name: name.value || undefined,
     password: password.value
   })
-  successMessage.value = 'Cadastro criado. Faça login para continuar.'
-  await router.push({ name: 'login' })
+  successMessage.value = auth.isLoggedIn
+    ? 'Cadastro criado. Você já está autenticado.'
+    : 'Cadastro criado. Faça login para continuar.'
+  await router.push({ name: auth.isLoggedIn ? 'me' : 'login' })
 }
 </script>
 

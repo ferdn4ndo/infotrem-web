@@ -8,6 +8,7 @@ export type ResourceConfig = {
   access: ResourceAccess
   primaryFields: string[]
   detailFields?: string[]
+  writeFields?: string[]
 }
 
 export const publicResources: ResourceConfig[] = [
@@ -17,7 +18,19 @@ export const publicResources: ResourceConfig[] = [
     path: '/media',
     entityType: 'media',
     access: 'public',
-    primaryFields: ['title', 'description', 'status']
+    primaryFields: ['title', 'description', 'status'],
+    writeFields: [
+      'title',
+      'type',
+      'description',
+      'status',
+      'original_url',
+      'references',
+      'known_author',
+      'author_confirmed',
+      'author_id',
+      'location_id'
+    ]
   },
   {
     key: 'albums',
@@ -25,7 +38,8 @@ export const publicResources: ResourceConfig[] = [
     path: '/albums',
     entityType: 'album',
     access: 'public',
-    primaryFields: ['title', 'description', 'status']
+    primaryFields: ['title', 'description', 'status'],
+    writeFields: ['title', 'description', 'status']
   },
   {
     key: 'comments',
@@ -41,7 +55,8 @@ export const publicResources: ResourceConfig[] = [
     path: '/information',
     entityType: 'information',
     access: 'public',
-    primaryFields: ['title', 'description', 'status']
+    primaryFields: ['title', 'description', 'status'],
+    writeFields: ['title', 'content', 'status', 'references']
   }
 ]
 
@@ -52,7 +67,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/companies',
     entityType: 'company',
     access: 'public',
-    primaryFields: ['name', 'code', 'status']
+    primaryFields: ['name', 'abbrev', 'id'],
+    writeFields: ['name', 'abbrev']
   },
   {
     key: 'manufacturers',
@@ -60,7 +76,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/manufacturers',
     entityType: 'manufacturer',
     access: 'public',
-    primaryFields: ['name', 'code', 'status']
+    primaryFields: ['full_name', 'short_name', 'id'],
+    writeFields: ['full_name', 'short_name']
   },
   {
     key: 'locations',
@@ -68,7 +85,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/locations',
     entityType: 'location',
     access: 'public',
-    primaryFields: ['name', 'code', 'status']
+    primaryFields: ['name', 'code', 'status'],
+    writeFields: ['name', 'code', 'status', 'center_latitude', 'center_longitude', 'is_verified']
   },
   {
     key: 'paths',
@@ -76,7 +94,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/paths',
     entityType: 'path',
     access: 'public',
-    primaryFields: ['name', 'code', 'status']
+    primaryFields: ['name', 'type', 'status'],
+    writeFields: ['name', 'type', 'status']
   },
   {
     key: 'routes',
@@ -84,7 +103,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/routes',
     entityType: 'route',
     access: 'public',
-    primaryFields: ['name', 'code', 'status']
+    primaryFields: ['name', 'builder_railroad_id', 'id'],
+    writeFields: ['name', 'builder_railroad_id']
   },
   {
     key: 'rolling-stock',
@@ -92,7 +112,17 @@ export const domainResources: ResourceConfig[] = [
     path: '/rolling-stock',
     entityType: 'rolling_stock',
     access: 'public',
-    primaryFields: ['number', 'prefix', 'status']
+    primaryFields: ['painted_identifier', 'serial_number', 'type'],
+    writeFields: [
+      'type',
+      'gauge_id',
+      'manufacturer_id',
+      'is_sigo',
+      'sigo_number',
+      'painted_identifier',
+      'serial_number',
+      'build_year'
+    ]
   },
   {
     key: 'locomotives',
@@ -100,7 +130,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/locomotives',
     entityType: 'locomotive',
     access: 'public',
-    primaryFields: ['number', 'prefix', 'status']
+    primaryFields: ['rolling_stock_id', 'design_id', 'id'],
+    writeFields: ['rolling_stock_id', 'design_id']
   },
   {
     key: 'freight-cars',
@@ -132,7 +163,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/states',
     entityType: 'location_state',
     access: 'public',
-    primaryFields: ['name', 'abbreviation']
+    primaryFields: ['name', 'abbrev', 'ibge_id'],
+    writeFields: ['name', 'abbrev', 'ibge_id']
   },
   {
     key: 'track-gauges',
@@ -140,7 +172,8 @@ export const domainResources: ResourceConfig[] = [
     path: '/track-gauges',
     entityType: 'track_gauge',
     access: 'public',
-    primaryFields: ['code', 'name']
+    primaryFields: ['code', 'size'],
+    writeFields: ['code', 'size']
   },
   {
     key: 'paint-schemes',
@@ -156,7 +189,7 @@ export const domainResources: ResourceConfig[] = [
     path: '/sigo-regionals',
     entityType: 'sigo_regional',
     access: 'public',
-    primaryFields: ['letter', 'name']
+    primaryFields: ['letter', 'name', 'abbrev']
   }
 ]
 
@@ -166,7 +199,8 @@ export const adminResources: ResourceConfig[] = [
     label: 'Usuários',
     path: '/users',
     access: 'admin',
-    primaryFields: ['email', 'username', 'is_staff', 'is_admin']
+    primaryFields: ['email', 'username', 'is_staff', 'is_admin'],
+    writeFields: ['email', 'username', 'name', 'is_staff', 'is_admin', 'is_active']
   },
   {
     key: 'mail',
@@ -179,6 +213,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'freight-car-categories',
     label: 'Categorias de vagões',
     path: '/freight-car-categories',
+    entityType: 'freight_car_category',
     access: 'staff',
     primaryFields: ['letter', 'name']
   },
@@ -186,6 +221,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'freight-car-types',
     label: 'Tipos de vagões',
     path: '/freight-car-types',
+    entityType: 'freight_car_type',
     access: 'staff',
     primaryFields: ['letters', 'name']
   },
@@ -193,6 +229,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'freight-car-gross-weight-types',
     label: 'Peso bruto de vagões',
     path: '/freight-car-gross-weight-types',
+    entityType: 'freight_car_gross_weight_type',
     access: 'staff',
     primaryFields: ['letter', 'name']
   },
@@ -200,6 +237,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'locomotive-designs',
     label: 'Modelos de locomotivas',
     path: '/locomotive-designs',
+    entityType: 'locomotive_design',
     access: 'staff',
     primaryFields: ['name', 'manufacturer_id']
   },
@@ -207,6 +245,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'passenger-car-types',
     label: 'Tipos de carros',
     path: '/passenger-car-types',
+    entityType: 'passenger_car_type',
     access: 'staff',
     primaryFields: ['name']
   },
@@ -214,6 +253,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'passenger-car-materials',
     label: 'Materiais de carros',
     path: '/passenger-car-materials',
+    entityType: 'passenger_car_material',
     access: 'staff',
     primaryFields: ['name']
   },
@@ -221,6 +261,7 @@ export const adminResources: ResourceConfig[] = [
     key: 'non-revenue-car-types',
     label: 'Tipos de veículos de serviço',
     path: '/non-revenue-car-types',
+    entityType: 'non_revenue_car_type',
     access: 'staff',
     primaryFields: ['name']
   }

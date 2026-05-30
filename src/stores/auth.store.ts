@@ -3,7 +3,12 @@ import { defineStore } from 'pinia'
 
 import * as AuthApi from '@/services/api/auth.api'
 import { setAuthTokenProvider } from '@/services/http/api-client'
-import type { CurrentUser, LoginPayload, RegisterPayload } from '@/types/domain/user.type'
+import type {
+  CurrentUser,
+  LoginPayload,
+  ProfileUpdatePayload,
+  RegisterPayload
+} from '@/types/domain/user.type'
 
 const tokenStorageKey = 'infotrem.authToken'
 
@@ -98,9 +103,45 @@ export const useAuthStore = defineStore('auth', () => {
     errorMessage.value = null
 
     try {
-      await AuthApi.register(payload)
+      const response = await AuthApi.register(payload)
+      const nextToken = extractToken(response)
+
+      if (nextToken) {
+        setToken(nextToken)
+        await refreshMe()
+      }
     } catch (error) {
       errorMessage.value = error instanceof Error ? error.message : 'Registration failed.'
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function updateProfile(payload: Partial<ProfileUpdatePayload>) {
+    isLoading.value = true
+    errorMessage.value = null
+
+    try {
+      user.value = await AuthApi.updateMe(payload)
+      return user.value
+    } catch (error) {
+      errorMessage.value = error instanceof Error ? error.message : 'Profile update failed.'
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function resendEmailValidation() {
+    isLoading.value = true
+    errorMessage.value = null
+
+    try {
+      return await AuthApi.resendEmailValidation()
+    } catch (error) {
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Email validation resend failed.'
       throw error
     } finally {
       isLoading.value = false
@@ -123,6 +164,8 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     login,
     register,
+    updateProfile,
+    resendEmailValidation,
     logout,
     refreshMe,
     setToken

@@ -35,8 +35,23 @@ const items: MenuList = {
     id: 4,
     icon: 'fa-photo-film',
     title: 'Mídia',
-    path: '/resources/media',
-    children: null
+    path: null,
+    children: {
+      1: {
+        id: 41,
+        icon: 'fa-photo-film',
+        title: 'Mídia',
+        path: '/media',
+        children: null
+      },
+      2: {
+        id: 42,
+        icon: 'fa-photo-film',
+        title: 'Álbuns',
+        path: '/albums',
+        children: null
+      }
+    }
   },
   5: {
     id: 5,
@@ -50,6 +65,13 @@ const items: MenuList = {
     icon: 'fa-magnifying-glass',
     title: 'Busca',
     path: '/search',
+    children: null
+  },
+  7: {
+    id: 7,
+    icon: 'fa-circle-info',
+    title: 'Contato',
+    path: '/contact',
     children: null
   }
 }

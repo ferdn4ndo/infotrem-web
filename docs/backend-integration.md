@@ -180,6 +180,11 @@ Cypress should cover:
 - Comment/reaction flow for an authenticated user.
 - One staff CRUD smoke path once admin screens exist.
 
+The default Cypress suite uses `cy.intercept` fixtures rather than requiring a
+live seeded API. This keeps CI deterministic while still exercising routing,
+guards, request URLs, and form behavior against backend-shaped responses. Live
+userver/API specs can be added later as an optional integration layer.
+
 ## Backend Contract Watchlist
 
 Before or during feature implementation, confirm:
@@ -187,6 +192,12 @@ Before or during feature implementation, confirm:
 - Login response token field.
 - `/me` role/profile fields.
 - Stable media thumbnail/raw URL strategy.
+- Default FileMgr storage for contributor uploads; the frontend should call the
+  default upload routes and must not ask normal users for storage IDs.
 - Search result `entity_type` to frontend route mapping.
 - Map item field guarantees.
-- Whether `/cronjob/run` should remain publicly callable.
+- Social summary keys: count, current-user boolean state, and relation ID.
+- Media review decisions currently use `approve`, `reject`, and
+  `needs_changes`.
+- `/cronjob/run` is not part of the public backend contract and should not be
+  called by the frontend.

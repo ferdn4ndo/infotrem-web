@@ -3,6 +3,7 @@ import type {
   CurrentUser,
   LoginPayload,
   LoginResponse,
+  ProfileUpdatePayload,
   RegisterPayload
 } from '@/types/domain/user.type'
 
@@ -18,7 +19,7 @@ export function me() {
   return apiClient.get<CurrentUser>('/me')
 }
 
-export function updateMe(payload: Partial<CurrentUser>) {
+export function updateMe(payload: Partial<ProfileUpdatePayload>) {
   return apiClient.patch<CurrentUser>('/me', payload)
 }
 
