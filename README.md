@@ -1,6 +1,9 @@
 # InfoTrem Web
 
-InfoTrem Web is a Vue 3 + Vite frontend for browsing railway-related media, menu navigation, and profile/header UI experiments. The current app uses local mock services for feed and menu data while the UI structure, routing, styling, and test tooling are being built out.
+InfoTrem Web is a Vue 3 + Vite frontend for InfoTrem. It now includes
+backend-backed auth/account flows, contact, media and album discovery,
+guided media upload, search, map results, generic resource browsing,
+information contributions, and staff/admin resource management.
 
 ## Requirements
 
@@ -28,8 +31,13 @@ yarn test:e2e:dev
 
 - `src/main.ts` boots Vue, Pinia, Vue Router, global SCSS, and FontAwesome.
 - `src/App.vue` owns the app shell: fixed header, side menu toggle, profile collapse, and routed content.
-- `src/router/index.ts` defines the current `/`, `/feed`, and `/about` routes.
-- `src/services/` contains local async mock data services for feed and menu content.
+- `src/router/index.ts` defines public, account, media, album, resource, and
+  staff/admin routes.
+- `src/services/http/` contains the shared API client, errors, and pagination
+  helpers.
+- `src/services/api/` contains backend-backed feature services.
+- `src/stores/auth.store.ts` owns token persistence, `/me` hydration, and
+  account mutations.
 - `src/components/` contains layout, input, feed, table, and starter Vue components.
 - `src/styles/` defines global CSS variables, breakpoints, and shared SCSS variables.
 - `cypress/` contains the Cypress e2e scaffold.
@@ -44,5 +52,9 @@ yarn test:e2e:dev
 - `docs/testing-and-ci.md` covers tests, linting, CI, and current verification caveats.
 
 ## Tooling Notes
+
+The app calls the backend through same-origin `/api/*`; Vite dev/preview proxy
+rewrites that path to `VITE_INFOTREM_API_BASE_URL`. In production this same
+path should be routed by the deployment gateway or reverse proxy.
 
 The project has moved to ESLint flat config in `eslint.config.js`. TypeScript path aliases are configured for `@/*` and `~/*` in app/test configs and should point at `src/*`; Vite also maps `@` to `src`.

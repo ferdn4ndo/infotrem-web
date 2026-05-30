@@ -1,6 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import FeedView from '../views/FeedView.vue'
+import { findResource } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 
 const router = createRouter({
@@ -54,15 +55,37 @@ const router = createRouter({
       component: () => import('@/views/public/MapView.vue')
     },
     {
+      path: '/contact',
+      name: 'contact',
+      component: () => import('@/views/public/ContactView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/upload/media',
       name: 'media-upload',
       component: () => import('@/views/account/MediaUploadView.vue'),
       meta: { requiresAuth: true }
     },
-    { path: '/media', redirect: '/resources/media' },
-    { path: '/media/:id', redirect: (to) => `/resources/media/${to.params.id}` },
-    { path: '/albums', redirect: '/resources/albums' },
-    { path: '/albums/:id', redirect: (to) => `/resources/albums/${to.params.id}` },
+    {
+      path: '/media',
+      name: 'media-list',
+      component: () => import('@/views/public/MediaListView.vue')
+    },
+    {
+      path: '/media/:id',
+      name: 'media-detail',
+      component: () => import('@/views/public/MediaDetailView.vue')
+    },
+    {
+      path: '/albums',
+      name: 'album-list',
+      component: () => import('@/views/public/AlbumListView.vue')
+    },
+    {
+      path: '/albums/:id',
+      name: 'album-detail',
+      component: () => import('@/views/public/AlbumDetailView.vue')
+    },
     { path: '/companies', redirect: '/resources/companies' },
     { path: '/manufacturers', redirect: '/resources/manufacturers' },
     { path: '/locations', redirect: '/resources/locations' },
@@ -81,11 +104,24 @@ const router = createRouter({
       component: () => import('@/views/public/ResourceDetailView.vue')
     },
     {
+      path: '/routes/:routeId/sections/:sectionId',
+      name: 'route-section-detail',
+      component: () => import('@/views/public/RouteSectionDetailView.vue')
+    },
+    {
       path: '/admin/resources/:resource',
       name: 'admin-resource',
       component: () => import('@/views/admin/AdminResourceView.vue'),
       meta: { requiresStaff: true }
     },
+    {
+      path: '/admin/operations',
+      name: 'admin-operations',
+      component: () => import('@/views/admin/OperationsView.vue'),
+      meta: { requiresStaff: true }
+    },
+    { path: '/admin/users', redirect: '/admin/resources/users' },
+    { path: '/admin/mail', redirect: '/admin/resources/mail' },
     {
       path: '/about',
       name: 'about',
@@ -97,8 +133,11 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to) => {
-  const auth = useAuthStore()
+type GuardAuth = ReturnType<typeof useAuthStore>
+
+export async function resolveRouteAccess(to: RouteLocationNormalized, auth: GuardAuth) {
+  const adminResource =
+    to.name === 'admin-resource' ? findResource(String(to.params.resource)) : undefined
 
   if (auth.token && !auth.user) {
     try {
@@ -112,13 +151,19 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.requiresStaff && !auth.isStaff) {
+  if ((to.meta.requiresAdmin || adminResource?.access === 'admin') && !auth.isAdmin) {
     return { name: auth.isLoggedIn ? 'home' : 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.requiresAdmin && !auth.isAdmin) {
+  if ((to.meta.requiresStaff || adminResource?.access === 'staff') && !auth.isStaff) {
     return { name: auth.isLoggedIn ? 'home' : 'login', query: { redirect: to.fullPath } }
   }
+}
+
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+
+  return resolveRouteAccess(to, auth)
 })
 
 export default router

@@ -6,10 +6,33 @@ export type CurrentUser = EntityRow & {
   name?: string
   email?: string
   avatar_url?: string
+  cpf?: string
+  birth_date?: string
+  address?: string
+  number?: string
+  complement?: string
+  zipcode?: string
+  phone?: string
+  city_id?: string
+  state_id?: string
   is_staff?: boolean
   is_admin?: boolean
   is_active?: boolean
 }
+
+export type ProfileUpdatePayload = Pick<
+  CurrentUser,
+  | 'name'
+  | 'cpf'
+  | 'birth_date'
+  | 'address'
+  | 'number'
+  | 'complement'
+  | 'zipcode'
+  | 'phone'
+  | 'city_id'
+  | 'state_id'
+>
 
 export type LoginPayload = {
   email: string

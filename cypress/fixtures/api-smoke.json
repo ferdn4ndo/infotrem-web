@@ -1,0 +1,110 @@
+{
+  "user": {
+    "id": "user-1",
+    "email": "user@example.test",
+    "username": "infotrem-user",
+    "name": "InfoTrem User",
+    "is_staff": false,
+    "is_admin": false
+  },
+  "staff": {
+    "id": "staff-1",
+    "email": "staff@example.test",
+    "username": "infotrem-staff",
+    "name": "InfoTrem Staff",
+    "is_staff": true,
+    "is_admin": false
+  },
+  "admin": {
+    "id": "admin-1",
+    "email": "admin@example.test",
+    "username": "infotrem-admin",
+    "name": "InfoTrem Admin",
+    "is_staff": true,
+    "is_admin": true
+  },
+  "media": {
+    "id": "media-1",
+    "title": "Locomotiva em teste",
+    "description": "Registro de teste",
+    "status": "PUBLISHED",
+    "type": "image",
+    "filemgr_storage_id": "storage-1",
+    "filemgr_file_id": "file-1",
+    "location_id": "location-1"
+  },
+  "album": {
+    "id": "album-1",
+    "title": "Álbum de teste",
+    "description": "Coleção de fumaça",
+    "status": "PUBLISHED"
+  },
+  "commentRelation": {
+    "id": "comment-relation-1",
+    "comment_id": "comment-1",
+    "created_by_id": "user-1",
+    "comment": {
+      "id": "comment-1",
+      "text": "Comentário inicial",
+      "created_by_id": "user-1",
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  "review": {
+    "id": "review-1",
+    "decision": "approve",
+    "comment": "Boa contribuição",
+    "created_by_id": "user-1",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  "socialSummary": {
+    "likes_count": 1,
+    "liked": false,
+    "like_id": null,
+    "favorites_count": 2,
+    "favorited": false,
+    "favorite_id": null
+  },
+  "likedSocialSummary": {
+    "likes_count": 2,
+    "liked": true,
+    "like_id": "like-1",
+    "favorites_count": 2,
+    "favorited": true,
+    "favorite_id": "favorite-1"
+  },
+  "commentSummary": {
+    "likes_count": 0,
+    "liked": false,
+    "like_id": null
+  },
+  "searchItems": [
+    {
+      "id": "media-1",
+      "entity_type": "media",
+      "title": "Locomotiva em teste",
+      "relevance": 1
+    },
+    {
+      "id": "route-section-1",
+      "entity_type": "route_section",
+      "name": "Seção A",
+      "railroad_route_id": "route-1",
+      "relevance": 0.8
+    }
+  ],
+  "mapItems": [
+    {
+      "id": "location-1",
+      "entity_type": "location",
+      "name": "Pátio Central",
+      "latitude": -23.55,
+      "longitude": -46.63
+    }
+  ],
+  "company": {
+    "id": "company-1",
+    "name": "Companhia Teste",
+    "status": "ACTIVE"
+  }
+}

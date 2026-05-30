@@ -75,17 +75,17 @@ const items: FeedMediaItem[] = [
   }
 ]
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 function mediaRowToFeedItem(row: MediaRow): FeedMediaItem {
   return {
     title: String(row.title ?? row.name ?? row.id),
-    mediaUrl: String(row.thumbnail_url ?? row.media_url ?? row.source ?? '/logo-light-bg.svg'),
+    mediaUrl: String(
+      row.thumbnail_url ?? row.media_url ?? row.original_url ?? '/logo-light-bg.svg'
+    ),
     mediaAlt: String(row.description ?? row.title ?? 'Mídia InfoTrem'),
     description: String(row.description ?? '-'),
-    mediaDate: row.media_date ? String(row.media_date) : null,
-    author: String(row.author ?? row.created_by_id ?? '-'),
-    source: String(row.source ?? '#')
+    mediaDate: row.datetime_taken ? String(row.datetime_taken) : null,
+    author: String(row.author_id ?? row.created_by_id ?? '-'),
+    source: String(row.original_url ?? '#')
   }
 }
 
@@ -94,9 +94,11 @@ export const getAll = async (): Promise<FeedMediaItem[]> => {
     const response = await listMedia({ limit: 50 })
 
     return response.items.map(mediaRowToFeedItem)
-  } catch {
-    await sleep(10)
+  } catch (error) {
+    if (import.meta.env.DEV && import.meta.env.VITE_INFOTREM_USE_MOCK_FEED === 'true') {
+      return Object.values(items)
+    }
 
-    return Object.values(items)
+    throw error
   }
 }

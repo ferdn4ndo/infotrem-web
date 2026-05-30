@@ -2,7 +2,7 @@
 
 ## Repo Snapshot
 
-InfoTrem Web is a Vue 3 single-page app built with Vite, TypeScript, Pinia, Vue Router, SCSS, FontAwesome, Vitest, Cypress, ESLint, Stylelint, and Prettier. It currently uses mock in-repo services for feed and menu data.
+InfoTrem Web is a Vue 3 single-page app built with Vite, TypeScript, Pinia, Vue Router, SCSS, FontAwesome, Vitest, Cypress, ESLint, Stylelint, and Prettier. It is backend-backed through the InfoTrem API using the shared HTTP client under `src/services/http` and feature services under `src/services/api`.
 
 The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-latest` with `actions/setup-node@v6` and `node-version: 26.x`.
 
@@ -10,8 +10,9 @@ The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-late
 
 - `src/main.ts` creates the app, registers Pinia, Vue Router, global SCSS, and FontAwesome.
 - `src/App.vue` controls the app shell: header, side menu, profile collapse panel, and router outlet.
-- `src/router/index.ts` defines routes for `/`, `/feed`, and `/about`.
-- `src/services/feed.service.ts` and `src/services/menu.service.ts` return async mock data.
+- `src/router/index.ts` defines public, auth/account, media, album, generic resource, and staff/admin routes.
+- `src/services/api/` contains backend-backed API modules for auth, contact, resources, media, albums, search, map, social actions, and information contributions.
+- `src/services/feed.service.ts` maps `/media` rows to legacy feed cards and only uses mock data when explicitly enabled for development.
 - `src/plugins/font-awesome.plugin.ts` is the single place to register FontAwesome icons before use.
 - `src/styles/colors.scss` defines CSS custom properties for light/dark themes.
 - `src/styles/variables.scss` defines SCSS breakpoints and z-index tokens.
@@ -30,11 +31,9 @@ The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-late
 
 ## Current Findings
 
-- `FeedView.vue` and `MediaView.vue` currently duplicate the same mock feed-loading logic.
-- `src/stores/counter.ts`, starter welcome/icon components, and starter tests still look like Vue template scaffolding.
+- `src/stores/counter.ts`, starter welcome/icon components, and starter tests still look like Vue template scaffolding and should not guide new backend-backed work.
 - `public/sw.js` is a self-destroying service worker and explicitly says it should not be version controlled.
-- `menu.service.ts` has a child route path `/inspire` that is not present in `src/router/index.ts`.
-- Some UI handlers still log to the console and are placeholders for real behavior.
+- Some backend features are intentionally still generic or shallow: operational endpoints, FileMgr storage discovery, deep nested railway detail pages, and fully stateful reactions.
 - Local verification may fail on older Node runtimes. Use Node 26 for meaningful results.
 
 ## Commands
