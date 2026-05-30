@@ -1,0 +1,77 @@
+name: 'Deploy static site to S3'
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: 'deploy-s3-main'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: 'Build and upload static files'
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'read'
+    env:
+      AWS_CLOUDFRONT_DISTRIBUTION_ID: '${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}'
+
+    steps:
+      - name: 'Checkout 🛎'
+        uses: 'actions/checkout@v6'
+
+      - name: 'Setup node env 🏗'
+        uses: 'actions/setup-node@v6'
+        with:
+          node-version: '26.x'
+          check-latest: true
+          cache: 'yarn'
+
+      - name: 'Install dependencies 👨🏻‍💻'
+        run: 'yarn --frozen-lockfile'
+
+      - name: 'Build static site 🏗'
+        env:
+          VITE_INFOTREM_API_BASE_URL: '${{ secrets.VITE_INFOTREM_API_BASE_URL }}'
+        run: 'yarn build'
+
+      - name: 'Configure AWS credentials'
+        uses: 'aws-actions/configure-aws-credentials@v4'
+        with:
+          aws-access-key-id: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+          aws-secret-access-key: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          aws-region: '${{ secrets.AWS_REGION }}'
+
+      - name: 'Upload immutable assets to S3'
+        env:
+          S3_BUCKET: '${{ secrets.AWS_S3_BUCKET }}'
+          S3_PREFIX: '${{ secrets.AWS_S3_PREFIX }}'
+        run: |
+          if [ -z "$S3_BUCKET" ]; then
+            echo "Missing required secret AWS_S3_BUCKET."
+            exit 1
+          fi
+
+          S3_URI="s3://${S3_BUCKET}"
+          if [ -n "$S3_PREFIX" ]; then
+            S3_URI="${S3_URI}/${S3_PREFIX#/}"
+          fi
+
+          aws s3 sync dist "$S3_URI" \
+            --delete \
+            --exclude "index.html" \
+            --cache-control "public,max-age=31536000,immutable"
+
+          aws s3 cp dist/index.html "$S3_URI/index.html" \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --content-type "text/html"
+
+      - name: 'Invalidate CloudFront cache'
+        if: "${{ env.AWS_CLOUDFRONT_DISTRIBUTION_ID != '' }}"
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$AWS_CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
