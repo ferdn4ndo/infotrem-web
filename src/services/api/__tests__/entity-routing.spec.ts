@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import { labelForEntityType, routeForEntityRow } from '@/services/api/entity-routing'
+import { allResources } from '@/services/api/resources'
 
 describe('entity routing', () => {
   it('routes top-level entity types through the resource registry', () => {
     expect(routeForEntityRow({ entity_type: 'company', id: 'company-1' })).toEqual({
-      label: 'Company',
+      label: 'Empresa',
       target: {
         name: 'resource-detail',
         params: { resource: 'companies', id: 'company-1' }
@@ -15,7 +16,7 @@ describe('entity routing', () => {
 
   it('routes media to the dedicated media detail page', () => {
     expect(routeForEntityRow({ entity_type: 'media', id: 'media-1' })).toEqual({
-      label: 'Media',
+      label: 'Midia',
       target: {
         name: 'media-detail',
         params: { id: 'media-1' }
@@ -31,7 +32,7 @@ describe('entity routing', () => {
         location_id: 'location-1'
       })
     ).toEqual({
-      label: 'Location information',
+      label: 'Informacao do local',
       target: {
         name: 'resource-detail',
         params: { resource: 'locations', id: 'location-1' }
@@ -47,7 +48,7 @@ describe('entity routing', () => {
         railroad_route_id: 'route-1'
       })
     ).toEqual({
-      label: 'Route section',
+      label: 'Secao da rota',
       target: {
         name: 'route-section-detail',
         params: { routeId: 'route-1', sectionId: 'section-1' }
@@ -64,7 +65,7 @@ describe('entity routing', () => {
         railroad_route_section_id: 'section-1'
       })
     ).toEqual({
-      label: 'Route section information',
+      label: 'Informacao da secao da rota',
       target: {
         name: 'route-section-detail',
         params: { routeId: 'route-1', sectionId: 'section-1' }
@@ -81,7 +82,7 @@ describe('entity routing', () => {
   })
 
   it('provides readable labels for known and unknown entity types', () => {
-    expect(labelForEntityType('route_section_information')).toBe('Route section information')
+    expect(labelForEntityType('route_section_information')).toBe('Informacao da secao da rota')
     expect(labelForEntityType('custom_entity')).toBe('custom entity')
   })
 
@@ -129,6 +130,36 @@ describe('entity routing', () => {
       const resolution = routeForEntityRow(row)
 
       expect(resolution.target ?? resolution.reason).toBeTruthy()
+    }
+  })
+
+  it('keeps registry entity types aligned with known frontend route targets', () => {
+    const resourcesWithEntityType = allResources.filter((resource) => Boolean(resource.entityType))
+    const dedicatedRoutes: Record<string, 'media-detail' | 'album-detail'> = {
+      media: 'media-detail',
+      album: 'album-detail'
+    }
+
+    for (const resource of resourcesWithEntityType) {
+      const resolution = routeForEntityRow({
+        entity_type: resource.entityType as string,
+        id: 'row-1'
+      })
+
+      expect(resolution.target).toBeTruthy()
+
+      if (resource.entityType && dedicatedRoutes[resource.entityType]) {
+        expect(resolution.target).toEqual({
+          name: dedicatedRoutes[resource.entityType],
+          params: { id: 'row-1' }
+        })
+        continue
+      }
+
+      expect(resolution.target).toEqual({
+        name: 'resource-detail',
+        params: { resource: resource.key, id: 'row-1' }
+      })
     }
   })
 })

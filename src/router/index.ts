@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import FeedView from '../views/FeedView.vue'
 import { findResource } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -10,12 +8,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: () => import('@/views/HomeView.vue')
     },
     {
       path: '/feed',
       name: 'feed',
-      component: FeedView
+      component: () => import('@/views/FeedView.vue')
     },
     {
       path: '/login',
@@ -101,7 +99,19 @@ const router = createRouter({
     {
       path: '/resources/:resource/:id',
       name: 'resource-detail',
-      component: () => import('@/views/public/ResourceDetailView.vue')
+      component: () => import('@/views/public/ResourceDetailView.vue'),
+      beforeEnter: (to) => {
+        const resource = String(to.params.resource ?? '')
+        const id = String(to.params.id ?? '')
+
+        if (resource === 'media') {
+          return { name: 'media-detail', params: { id } }
+        }
+
+        if (resource === 'albums') {
+          return { name: 'album-detail', params: { id } }
+        }
+      }
     },
     {
       path: '/routes/:routeId/sections/:sectionId',

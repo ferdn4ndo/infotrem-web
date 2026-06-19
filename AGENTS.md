@@ -31,7 +31,6 @@ The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-late
 
 ## Current Findings
 
-- `src/stores/counter.ts`, starter welcome/icon components, and starter tests still look like Vue template scaffolding and should not guide new backend-backed work.
 - `public/sw.js` is a self-destroying service worker and explicitly says it should not be version controlled.
 - Some backend features are intentionally still generic or shallow: operational endpoints, FileMgr storage discovery, deep nested railway detail pages, and fully stateful reactions.
 - Local verification may fail on older Node runtimes. Use Node 26 for meaningful results.

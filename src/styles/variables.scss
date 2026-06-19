@@ -1,8 +1,71 @@
-$breakpoint-large: 1080px;
+$breakpoint-small: 480px;
 $breakpoint-medium: 720px;
+$breakpoint-large: 1080px;
+
+$space-scale: (
+  1: 4px,
+  2: 8px,
+  3: 12px,
+  4: 16px,
+  5: 24px,
+  6: 32px,
+  8: 48px,
+  10: 64px
+);
+
+$space-1: map-get($space-scale, 1);
+$space-2: map-get($space-scale, 2);
+$space-3: map-get($space-scale, 3);
+$space-4: map-get($space-scale, 4);
+$space-5: map-get($space-scale, 5);
+$space-6: map-get($space-scale, 6);
+$space-8: map-get($space-scale, 8);
+$space-10: map-get($space-scale, 10);
+
+$font-size-scale: (
+  xs: 12px,
+  sm: 13px,
+  md: 15px,
+  lg: 18px,
+  xl: 24px,
+  2xl: 32px
+);
+
+$font-size-xs: map-get($font-size-scale, xs);
+$font-size-sm: map-get($font-size-scale, sm);
+$font-size-md: map-get($font-size-scale, md);
+$font-size-lg: map-get($font-size-scale, lg);
+$font-size-xl: map-get($font-size-scale, xl);
+$font-size-2xl: map-get($font-size-scale, 2xl);
+
+$line-height-tight: 1.25;
+$line-height-base: 1.6;
+
+$radius-md: 8px;
+$font-weight-bold: 700;
 
 $z-index-a: 0;
 $z-index-b: 9; // Overlapping elements on the same page
 $z-index-c: 99; // Page overlay (like a color fade)
 $z-index-d: 999; // Modals
 $z-index-e: 9999; // Confirmation messages and toasts
+
+:root {
+  --space-1: #{$space-1};
+  --space-2: #{$space-2};
+  --space-3: #{$space-3};
+  --space-4: #{$space-4};
+  --space-5: #{$space-5};
+  --space-6: #{$space-6};
+  --space-8: #{$space-8};
+  --space-10: #{$space-10};
+  --font-size-xs: #{$font-size-xs};
+  --font-size-sm: #{$font-size-sm};
+  --font-size-md: #{$font-size-md};
+  --font-size-lg: #{$font-size-lg};
+  --font-size-xl: #{$font-size-xl};
+  --font-size-2xl: #{$font-size-2xl};
+  --line-height-tight: #{$line-height-tight};
+  --line-height-base: #{$line-height-base};
+  --header-height: 60px;
+}

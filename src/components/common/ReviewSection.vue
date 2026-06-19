@@ -8,6 +8,8 @@ import {
   type ReviewDecision
 } from '@/services/api/review-decisions'
 import { deleteNested, updateNested } from '@/services/api/social.api'
+import EmptyState from '@/components/common/EmptyState.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
 
@@ -128,10 +130,13 @@ async function deleteReview(row: EntityRow) {
 
 <template>
   <div class="ReviewSection">
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
-
-    <p v-if="items.length === 0">Nenhuma avaliação encontrada.</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
+    <EmptyState
+      v-if="items.length === 0"
+      title="Nenhuma avaliação encontrada"
+      description="Ainda não há avaliações para este item."
+    />
 
     <article
       v-for="review in items"
@@ -189,31 +194,31 @@ async function deleteReview(row: EntityRow) {
 <style scoped lang="scss">
 .ReviewSection {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 
   &-Item {
     display: grid;
-    gap: 10px;
+    gap: var(--space-2);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: $radius-md;
     background: var(--color-background-soft);
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   &-Meta {
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 
   &-Actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   form {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {

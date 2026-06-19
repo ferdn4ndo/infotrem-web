@@ -2,10 +2,18 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AppCard from '@/components/common/AppCard.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { getAlbum } from '@/services/api/albums.api'
+import {
+  MEDIA_FALLBACK_LOGO_URL,
+  mediaThumbnailUrl,
+  toFallbackImage
+} from '@/services/api/media.api'
 import {
   createNested,
   createNestedComment,
@@ -35,8 +43,13 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
 const actionErrorMessage = ref<string | null>(null)
+let activeRequestId = 0
 
 const albumId = computed(() => String(route.params.id ?? ''))
+const coverUrl = computed(() => {
+  const media = relationSections.value.find((section) => section.key === 'media')?.items?.[0]
+  return media ? mediaThumbnailUrl(media) : MEDIA_FALLBACK_LOGO_URL
+})
 
 const relationConfigs = [
   { key: 'media', label: 'Mídia' },
@@ -58,8 +71,15 @@ async function loadRelation(key: string, label: string): Promise<RelationSection
   }
 }
 
-async function loadAlbum() {
+async function loadAlbum(requestId: number, isCancelled: () => boolean) {
   if (!albumId.value) {
+    if (requestId === activeRequestId) {
+      item.value = null
+      socialSummary.value = null
+      relationSections.value = []
+      errorMessage.value = null
+      isLoading.value = false
+    }
     return
   }
 
@@ -69,15 +89,46 @@ async function loadAlbum() {
   actionErrorMessage.value = null
 
   try {
-    item.value = await getAlbum(albumId.value)
-    socialSummary.value = await getSocialSummary(`/albums/${albumId.value}`)
-    relationSections.value = await Promise.all(
+    const loadedItem = await getAlbum(albumId.value)
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    item.value = loadedItem
+
+    const loadedSocialSummary = await getSocialSummary(`/albums/${albumId.value}`)
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    socialSummary.value = loadedSocialSummary
+
+    const loadedRelationSections = await Promise.all(
       relationConfigs.map((config) => loadRelation(config.key, config.label))
     )
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    relationSections.value = loadedRelationSections
   } catch (error) {
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
     errorMessage.value = error instanceof Error ? error.message : 'Não foi possível carregar álbum.'
   } finally {
-    isLoading.value = false
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
   }
 }
 
@@ -148,7 +199,18 @@ async function deleteRelation(relation: 'favorites' | 'likes') {
   }
 }
 
-watchEffect(loadAlbum)
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
+  })
+
+  void loadAlbum(requestId, () => cancelled)
+})
 </script>
 
 <template>
@@ -156,15 +218,26 @@ watchEffect(loadAlbum)
     <RouterLink :to="{ name: 'album-list' }">Voltar para álbuns</RouterLink>
 
     <h1>{{ item?.title ?? 'Álbum' }}</h1>
-    <p v-if="isLoading">Carregando álbum...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Carregando álbum..." />
+    <StatusMessage v-else-if="errorMessage" state="error" :message="errorMessage" />
 
-    <EntityCard
-      v-if="item"
-      :item="item"
-      :title-fields="['title', 'description', 'id']"
-      :detail-fields="['status', 'created_at', 'updated_at']"
-    />
+    <AppCard v-if="item">
+      <EntityCard
+        :item="item"
+        :title-fields="['title', 'description', 'id']"
+        :detail-fields="['status', 'created_at', 'updated_at']"
+      />
+    </AppCard>
+
+    <section v-if="item" class="AlbumDetailView-Section">
+      <h2>Capa do álbum</h2>
+      <img
+        class="AlbumDetailView-Cover"
+        :src="coverUrl"
+        :alt="`Capa do álbum ${String(item.title ?? item.id)}`"
+        @error="toFallbackImage"
+      />
+    </section>
 
     <section v-if="item" class="AlbumDetailView-Section">
       <h2>Ações</h2>
@@ -193,8 +266,8 @@ watchEffect(loadAlbum)
       <RouterLink v-else to="/login">Entre para interagir</RouterLink>
     </section>
 
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
 
     <section v-if="item" class="AlbumDetailView-Section">
       <h2>Novo comentário</h2>
@@ -211,21 +284,36 @@ watchEffect(loadAlbum)
 
     <section v-for="section in relationSections" :key="section.key" class="AlbumDetailView-Section">
       <h2>{{ section.label }}</h2>
-      <p v-if="section.error">{{ section.error }}</p>
+      <StatusMessage v-if="section.error" state="error" :message="section.error" />
       <CommentSection
         v-else-if="section.key === 'comments'"
         :parent-path="`/albums/${albumId}`"
         :items="section.items"
         @refresh="refreshComments"
       />
-      <p v-else-if="section.items.length === 0">Nenhum registro encontrado.</p>
+      <EmptyState
+        v-else-if="section.items.length === 0"
+        title="Nenhum registro encontrado"
+        description="Não há itens relacionados nesta seção."
+      />
       <template v-else>
-        <RoutableEntitySummaryCard
+        <article
           v-for="related in section.items"
           :key="String(related.id)"
-          :item="related"
-          :title-fields="['title', 'name', 'text', 'media_id', 'id']"
-        />
+          class="AlbumDetailView-RelatedItem"
+        >
+          <img
+            v-if="section.key === 'media'"
+            class="AlbumDetailView-Thumb"
+            :src="mediaThumbnailUrl(related)"
+            :alt="String(related.title ?? related.name ?? 'Miniatura de mídia')"
+            @error="toFallbackImage"
+          />
+          <RoutableEntitySummaryCard
+            :item="related"
+            :title-fields="['title', 'name', 'text', 'media_id', 'id']"
+          />
+        </article>
       </template>
     </section>
   </main>
@@ -234,17 +322,58 @@ watchEffect(loadAlbum)
 <style scoped lang="scss">
 .AlbumDetailView {
   display: grid;
-  gap: 20px;
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-5);
+  padding: var(--space-4);
 
   &-Section {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
+  }
+
+  &-Cover {
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: $radius-md;
+    border: 1px solid var(--color-border);
+    background: var(--color-background-soft);
+  }
+
+  &-RelatedItem {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: minmax(96px, 180px) 1fr;
+    align-items: start;
+  }
+
+  &-Thumb {
+    width: 100%;
+    height: 112px;
+    object-fit: cover;
+    border-radius: $radius-md;
+    border: 1px solid var(--color-border);
+    background: var(--color-background-soft);
   }
 
   textarea {
     width: 100%;
     min-height: 90px;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
+
+    &-RelatedItem {
+      grid-template-columns: 1fr;
+    }
+
+    &-Thumb {
+      max-width: 240px;
+      height: 140px;
+    }
   }
 }
 </style>

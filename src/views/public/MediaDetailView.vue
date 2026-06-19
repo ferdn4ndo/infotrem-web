@@ -2,15 +2,22 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AppCard from '@/components/common/AppCard.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
 import ReviewSection from '@/components/common/ReviewSection.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import {
+  MEDIA_FALLBACK_LOGO_URL,
   createMediaDownload,
   getMedia,
+  isVideoMedia,
   listMediaRelation,
-  mediaRawUrl
+  mediaPreviewUrl,
+  mediaRawUrl,
+  toFallbackImage
 } from '@/services/api/media.api'
 import {
   createNested,
@@ -44,11 +51,34 @@ const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
 const actionErrorMessage = ref<string | null>(null)
 const rawHref = ref<string | null>(null)
+let activeRequestId = 0
 
 const mediaId = computed(() => String(route.params.id ?? ''))
 const storageId = computed(() => stringField(item.value, 'filemgr_storage_id'))
 const fileId = computed(() => stringField(item.value, 'filemgr_file_id'))
 const canDownload = computed(() => Boolean(storageId.value && fileId.value))
+const previewIsVideo = computed(() => (item.value ? isVideoMedia(item.value) : false))
+const previewUrl = computed(() => {
+  if (!item.value) {
+    return MEDIA_FALLBACK_LOGO_URL
+  }
+
+  if (previewIsVideo.value) {
+    return (
+      stringField(item.value, 'original_url') ??
+      stringField(item.value, 'media_url') ??
+      MEDIA_FALLBACK_LOGO_URL
+    )
+  }
+
+  const imageRelations =
+    relationSections.value.find((section) => section.key === 'images')?.items ??
+    relationSections.value.find((section) => section.key === 'image-sizes')?.items ??
+    []
+  const imageCandidate = imageRelations[0]
+
+  return imageCandidate ? mediaPreviewUrl(imageCandidate) : mediaPreviewUrl(item.value)
+})
 
 const relationConfigs = [
   { key: 'images', label: 'Imagens' },
@@ -95,8 +125,15 @@ async function loadRelation(key: string, label: string): Promise<RelationSection
   }
 }
 
-async function loadMedia() {
+async function loadMedia(requestId: number, isCancelled: () => boolean) {
   if (!mediaId.value) {
+    if (requestId === activeRequestId) {
+      item.value = null
+      socialSummary.value = null
+      relationSections.value = []
+      errorMessage.value = null
+      isLoading.value = false
+    }
     return
   }
 
@@ -107,15 +144,46 @@ async function loadMedia() {
   rawHref.value = null
 
   try {
-    item.value = await getMedia(mediaId.value)
-    socialSummary.value = await getSocialSummary(`/media/${mediaId.value}`)
-    relationSections.value = await Promise.all(
+    const loadedItem = await getMedia(mediaId.value)
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    item.value = loadedItem
+
+    const loadedSocialSummary = await getSocialSummary(`/media/${mediaId.value}`)
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    socialSummary.value = loadedSocialSummary
+
+    const loadedRelationSections = await Promise.all(
       relationConfigs.map((config) => loadRelation(config.key, config.label))
     )
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
+    relationSections.value = loadedRelationSections
   } catch (error) {
+    if (isCancelled() || requestId !== activeRequestId) {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+      return
+    }
     errorMessage.value = error instanceof Error ? error.message : 'Não foi possível carregar mídia.'
   } finally {
-    isLoading.value = false
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
   }
 }
 
@@ -241,7 +309,18 @@ async function prepareDownload() {
   }
 }
 
-watchEffect(loadMedia)
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
+  })
+
+  void loadMedia(requestId, () => cancelled)
+})
 </script>
 
 <template>
@@ -250,15 +329,36 @@ watchEffect(loadMedia)
 
     <h1>{{ item?.title ?? item?.name ?? 'Mídia' }}</h1>
 
-    <p v-if="isLoading">Carregando mídia...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Carregando mídia..." />
+    <StatusMessage v-else-if="errorMessage" state="error" :message="errorMessage" />
 
-    <EntityCard
-      v-if="item"
-      :item="item"
-      :title-fields="['title', 'name', 'description', 'id']"
-      :detail-fields="['status', 'type', 'original_url', 'references', 'location_id']"
-    />
+    <AppCard v-if="item">
+      <EntityCard
+        :item="item"
+        :title-fields="['title', 'name', 'description', 'id']"
+        :detail-fields="['status', 'type', 'original_url', 'references', 'location_id']"
+      />
+    </AppCard>
+
+    <section v-if="item" class="MediaDetailView-Preview">
+      <h2>Pré-visualização</h2>
+      <video
+        v-if="previewIsVideo"
+        class="MediaDetailView-PreviewMedia"
+        :src="previewUrl"
+        controls
+        preload="metadata"
+      >
+        Seu navegador não suporta vídeo HTML5.
+      </video>
+      <img
+        v-else
+        class="MediaDetailView-PreviewMedia"
+        :src="previewUrl"
+        :alt="String(item.title ?? item.name ?? 'Pré-visualização de mídia')"
+        @error="toFallbackImage"
+      />
+    </section>
 
     <section v-if="item" class="MediaDetailView-Actions">
       <h2>Ações</h2>
@@ -306,8 +406,8 @@ watchEffect(loadMedia)
       <RouterLink v-else to="/login">Entre para interagir</RouterLink>
     </section>
 
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
 
     <section v-if="item" class="MediaDetailView-Comments">
       <h2>Novo comentário</h2>
@@ -352,7 +452,7 @@ watchEffect(loadMedia)
 
     <section v-for="section in relationSections" :key="section.key" class="MediaDetailView-Section">
       <h2>{{ section.label }}</h2>
-      <p v-if="section.error">{{ section.error }}</p>
+      <StatusMessage v-if="section.error" state="error" :message="section.error" />
       <CommentSection
         v-else-if="section.key === 'comments'"
         :parent-path="`/media/${mediaId}`"
@@ -365,7 +465,11 @@ watchEffect(loadMedia)
         :items="section.items"
         @refresh="refreshReviews"
       />
-      <p v-else-if="section.items.length === 0">Nenhum registro encontrado.</p>
+      <EmptyState
+        v-else-if="section.items.length === 0"
+        title="Nenhum registro encontrado"
+        description="Não há itens relacionados nesta seção."
+      />
       <template v-else>
         <RoutableEntitySummaryCard
           v-for="related in section.items"
@@ -381,24 +485,41 @@ watchEffect(loadMedia)
 <style scoped lang="scss">
 .MediaDetailView {
   display: grid;
-  gap: 20px;
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-5);
+  padding: var(--space-4);
 
   &-Actions,
+  &-Preview,
   &-Comments,
   &-Section {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   form {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {
     width: 100%;
     min-height: 90px;
+  }
+
+  &-PreviewMedia {
+    width: 100%;
+    max-height: 70vh;
+    border-radius: $radius-md;
+    border: 1px solid var(--color-border);
+    background: var(--color-background-soft);
+    object-fit: contain;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

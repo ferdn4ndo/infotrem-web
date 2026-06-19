@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AppCard from '@/components/common/AppCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { submitContact, type ContactPayload } from '@/services/api/contact.api'
 
 const form = ref<ContactPayload>({
@@ -46,48 +48,58 @@ async function sendContact() {
       associada automaticamente à mensagem.
     </p>
 
-    <p v-if="message">{{ message }}</p>
-    <p v-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Enviando mensagem..." />
+    <StatusMessage v-if="message" state="empty" :message="message" />
+    <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
 
-    <form class="ContactView-Form" data-cy="contact-form" @submit.prevent="sendContact">
-      <label>
-        Tipo
-        <input v-model="form.type" placeholder="contact" />
-      </label>
-      <label>
-        Nome
-        <input v-model="form.name" />
-      </label>
-      <label>
-        E-mail
-        <input v-model="form.email" type="email" />
-      </label>
-      <label>
-        Telefone
-        <input v-model="form.phone" />
-      </label>
-      <label>
-        Mensagem
-        <textarea v-model="form.message" data-cy="contact-message" required />
-      </label>
-      <button type="submit" data-cy="contact-submit" :disabled="isLoading">Enviar</button>
-    </form>
+    <AppCard>
+      <form class="ContactView-Form" data-cy="contact-form" @submit.prevent="sendContact">
+        <label>
+          Tipo
+          <input v-model="form.type" placeholder="contato" />
+        </label>
+        <label>
+          Nome
+          <input v-model="form.name" />
+        </label>
+        <label>
+          E-mail
+          <input v-model="form.email" type="email" />
+        </label>
+        <label>
+          Telefone
+          <input v-model="form.phone" />
+        </label>
+        <label>
+          Mensagem
+          <textarea v-model="form.message" data-cy="contact-message" required />
+        </label>
+        <button type="submit" data-cy="contact-submit" :disabled="isLoading">Enviar</button>
+      </form>
+    </AppCard>
   </main>
 </template>
 
 <style scoped lang="scss">
 .ContactView {
   display: grid;
-  gap: 16px;
-  padding: 24px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  gap: var(--space-4);
+  padding: var(--space-4);
 
   &-Form {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   textarea {
     min-height: 140px;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

@@ -66,7 +66,6 @@ function displayDate(inputDate: string | null) {
     }
 
     @media (min-width: $breakpoint-large) {
-      // flex: 0 0 100%;
       max-width: 100px;
       width: 12vw;
     }

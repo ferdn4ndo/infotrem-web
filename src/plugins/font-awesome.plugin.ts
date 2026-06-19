@@ -14,7 +14,17 @@ import {
   faGears,
   faRss,
   faMap,
-  faPhotoFilm
+  faPhotoFilm,
+  faMoon,
+  faSun,
+  faBuilding,
+  faIndustry,
+  faLocationDot,
+  faRoute,
+  faUpload,
+  faUser,
+  faKey,
+  faShieldHalved
 } from '@fortawesome/free-solid-svg-icons'
 
 export const prepareIconsLibrary = (): void => {
@@ -31,4 +41,14 @@ export const prepareIconsLibrary = (): void => {
   library.add(faRss)
   library.add(faMap)
   library.add(faPhotoFilm)
+  library.add(faMoon)
+  library.add(faSun)
+  library.add(faBuilding)
+  library.add(faIndustry)
+  library.add(faLocationDot)
+  library.add(faRoute)
+  library.add(faUpload)
+  library.add(faUser)
+  library.add(faKey)
+  library.add(faShieldHalved)
 }

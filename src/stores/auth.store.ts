@@ -33,13 +33,21 @@ function persistToken(token: string | null) {
 }
 
 function extractToken(response: Record<string, unknown>) {
-  return (
+  const tokenCandidate =
     response.token ??
     response.key ??
     response.auth_token ??
     response.access_token ??
     response.user_token
-  )?.toString()
+
+  if (tokenCandidate === null || tokenCandidate === undefined || tokenCandidate === '') {
+    console.warn('[auth.store] Authentication response did not include a recognized token field.', {
+      keys: Object.keys(response)
+    })
+    return null
+  }
+
+  return tokenCandidate.toString()
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -91,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
       setToken(nextToken)
       await refreshMe()
     } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+      errorMessage.value = error instanceof Error ? error.message : 'Não foi possível entrar.'
       throw error
     } finally {
       isLoading.value = false
@@ -111,7 +119,8 @@ export const useAuthStore = defineStore('auth', () => {
         await refreshMe()
       }
     } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : 'Registration failed.'
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Não foi possível concluir o cadastro.'
       throw error
     } finally {
       isLoading.value = false
@@ -126,7 +135,8 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = await AuthApi.updateMe(payload)
       return user.value
     } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : 'Profile update failed.'
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.'
       throw error
     } finally {
       isLoading.value = false
@@ -141,7 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
       return await AuthApi.resendEmailValidation()
     } catch (error) {
       errorMessage.value =
-        error instanceof Error ? error.message : 'Email validation resend failed.'
+        error instanceof Error ? error.message : 'Não foi possível reenviar a validação de e-mail.'
       throw error
     } finally {
       isLoading.value = false

@@ -28,7 +28,12 @@ function getIcon() {
 </script>
 
 <template>
-  <div class="ProfileToolbar" @click="handleCollapseClick">
+  <button
+    class="ProfileToolbar"
+    type="button"
+    :aria-label="isCollapseOpened ? 'Fechar menu do perfil' : 'Abrir menu do perfil'"
+    @click="handleCollapseClick"
+  >
     <div class="ProfileToolbar-VisibleWrapper">
       <div class="ProfileToolbar-AvatarWrapper">
         <img
@@ -46,25 +51,27 @@ function getIcon() {
 
       <div class="ProfileToolbar-ButtonWrapper">
         <Transition name="fade" mode="out-in">
-          <font-awesome-icon :key="new Date().getTime()" :icon="getIcon()" />
+          <font-awesome-icon :key="String(props.isCollapseOpened)" :icon="getIcon()" />
         </Transition>
       </div>
     </div>
-  </div>
+  </button>
 </template>
 
 <style lang="scss" scoped>
 .ProfileToolbar {
   height: 40px;
-  margin: 5px 10px;
+  margin: var(--space-1) var(--space-2);
   position: relative;
   cursor: pointer;
+  padding: 0;
 
   background-color: var(--color-secondary-normal);
   border-color: var(--color-secondary-border);
   border-width: 1px;
   border-style: solid;
   border-radius: 10px;
+  color: var(--color-text);
 
   &:hover {
     background-color: var(--color-secondary-hover);
@@ -72,6 +79,11 @@ function getIcon() {
 
   &:active {
     background-color: var(--color-secondary-active);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-border);
+    outline-offset: 2px;
   }
 
   &-VisibleWrapper {
@@ -97,13 +109,13 @@ function getIcon() {
   &-ButtonWrapper {
     display: flex;
     align-items: center;
-    padding-right: 10px;
-    margin-left: 10px;
+    padding-right: var(--space-2);
+    margin-left: var(--space-2);
   }
 
   &-DataWrapper {
     flex: 1 1 auto;
-    margin-left: 10px;
+    margin-left: var(--space-2);
 
     display: none;
     align-items: center;
@@ -114,7 +126,7 @@ function getIcon() {
   }
 
   &-Name {
-    font-size: 16px;
+    font-size: var(--font-size-md);
     text-wrap: nowrap;
   }
 
@@ -131,8 +143,8 @@ function getIcon() {
   }
 
   &-Link {
-    font-size: 14px;
-    padding: 0 5px;
+    font-size: var(--font-size-sm);
+    padding: 0 var(--space-1);
     cursor: pointer;
   }
 }

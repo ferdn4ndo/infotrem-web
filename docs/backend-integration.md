@@ -1,8 +1,7 @@
 # Backend Integration
 
 This note describes how `infotrem-web` should integrate with `infotrem-api`.
-It complements the root parity roadmap in
-`../../docs/frontend-backend-parity.md`.
+It complements the root engineering knowledge base under `../../_docs/engineering/`.
 
 ## Integration Principles
 

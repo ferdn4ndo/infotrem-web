@@ -6,6 +6,7 @@ type FeedMediaItem = {
   author: string
   source: string
   mediaDate: string | null
+  subtitle: string
 }
 
 export type { FeedMediaItem }

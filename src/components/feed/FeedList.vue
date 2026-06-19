@@ -5,11 +5,20 @@ import FeedItem from '@/components/feed/FeedItem.vue'
 defineProps<{
   items: FeedMediaItem[]
 }>()
+
+function feedItemKey(item: FeedMediaItem) {
+  return `${item.mediaUrl || 'no-url'}::${item.title || 'untitled'}::${item.source || 'no-source'}`
+}
 </script>
 
 <template>
   <div class="FeedList">
-    <FeedItem v-for="(item, i) in items" :key="i" :media-item="item" class="FeedList-Item" />
+    <FeedItem
+      v-for="item in items"
+      :key="feedItemKey(item)"
+      :media-item="item"
+      class="FeedList-Item"
+    />
   </div>
 </template>
 

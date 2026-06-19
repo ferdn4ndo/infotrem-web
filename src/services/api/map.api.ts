@@ -15,6 +15,6 @@ export type MapResult = {
   query: EntityRow
 }
 
-export function getMapData(query: MapQuery) {
-  return apiClient.get<MapResult>('/map', { query })
+export function getMapData(query: MapQuery, options?: { signal?: AbortSignal }) {
+  return apiClient.get<MapResult>('/map', { query, signal: options?.signal })
 }

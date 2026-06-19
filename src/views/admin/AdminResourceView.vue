@@ -2,7 +2,11 @@
 import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
+import AppCard from '@/components/common/AppCard.vue'
+import AppPagination from '@/components/common/AppPagination.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { findResource } from '@/services/api/resources'
 import {
   createResource,
@@ -22,6 +26,11 @@ const payload = ref('{}')
 const formValues = ref<Record<string, string | boolean>>({})
 const errorMessage = ref<string | null>(null)
 const message = ref<string | null>(null)
+const isLoading = ref(false)
+const count = ref(0)
+const pageLimit = 24
+const offset = ref(0)
+let activeRequestId = 0
 
 const resource = computed(() => findResource(String(route.params.resource)))
 const canAccessResource = computed(() => {
@@ -43,23 +52,43 @@ const hasTypedForm = computed(() => Boolean(resource.value?.writeFields?.length)
 
 async function loadItems() {
   if (!resource.value || !canAccessResource.value) {
+    items.value = []
+    count.value = 0
     return
   }
 
-  const response = await listResource(resource.value.path, { limit: 100 })
+  const response = await listResource(resource.value.path, {
+    limit: pageLimit,
+    offset: offset.value
+  })
   items.value = response.items
+  count.value = response.count
 }
 
-watchEffect(async () => {
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+  })
+
   errorMessage.value = null
   message.value = null
+  isLoading.value = true
 
-  try {
-    await loadItems()
-  } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : 'Não foi possível carregar o recurso.'
-  }
+  void loadItems()
+    .catch((error) => {
+      if (cancelled || requestId !== activeRequestId) {
+        return
+      }
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Não foi possível carregar o recurso.'
+    })
+    .finally(() => {
+      if (!cancelled && requestId === activeRequestId) {
+        isLoading.value = false
+      }
+    })
 })
 
 function selectItem(item: EntityRow) {
@@ -165,18 +194,33 @@ async function confirmDelete() {
       error instanceof Error ? error.message : 'Não foi possível excluir o registro.'
   }
 }
+
+function handleOffsetChange(nextOffset: number) {
+  offset.value = nextOffset
+}
 </script>
 
 <template>
   <main class="AdminResourceView">
     <h1>Administração: {{ resource?.label ?? 'Recurso' }}</h1>
-    <p v-if="resource && !canAccessResource">
-      Seu usuário não tem permissão para administrar este recurso.
-    </p>
-    <p v-if="errorMessage">{{ errorMessage }}</p>
-    <p v-if="message">{{ message }}</p>
+    <EmptyState
+      v-if="resource && !canAccessResource"
+      title="Acesso negado"
+      description="Seu usuário não tem permissão para administrar este recurso."
+    />
+    <StatusMessage v-if="isLoading" state="loading" message="Carregando registros..." />
+    <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
+    <StatusMessage v-if="message" state="empty" :message="message" />
+    <EmptyState
+      v-if="resource && canAccessResource && !isLoading && !errorMessage && items.length === 0"
+      title="Nenhum registro encontrado"
+      description="Ainda não existem registros para este recurso."
+    />
 
-    <section v-if="resource && canAccessResource" class="AdminResourceView-Layout">
+    <section
+      v-if="resource && canAccessResource && items.length > 0"
+      class="AdminResourceView-Layout"
+    >
       <div class="AdminResourceView-List">
         <div
           v-for="item in items"
@@ -184,12 +228,14 @@ async function confirmDelete() {
           class="AdminResourceView-Row"
           data-cy="admin-row"
         >
-          <EntityCard
-            class="AdminResourceView-Item"
-            :item="item"
-            :title-fields="resource?.primaryFields"
-            @click="selectItem(item)"
-          />
+          <AppCard>
+            <EntityCard
+              class="AdminResourceView-Item"
+              :item="item"
+              :title-fields="resource?.primaryFields"
+              @click="selectItem(item)"
+            />
+          </AppCard>
           <button type="button" data-cy="admin-delete" @click="requestDelete(item)">Excluir</button>
         </div>
       </div>
@@ -228,16 +274,27 @@ async function confirmDelete() {
         <button type="button" data-cy="admin-new" @click="startNewItem">Novo</button>
       </form>
     </section>
+
+    <AppPagination
+      v-if="count > pageLimit && resource && canAccessResource"
+      :limit="pageLimit"
+      :offset="offset"
+      :count="count"
+      @update:offset="handleOffsetChange"
+    />
   </main>
 </template>
 
 <style scoped lang="scss">
 .AdminResourceView {
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4);
 
   &-Layout {
     display: grid;
-    gap: 24px;
+    gap: var(--space-5);
 
     @media (min-width: $breakpoint-large) {
       grid-template-columns: 1fr 1fr;
@@ -246,12 +303,12 @@ async function confirmDelete() {
 
   &-List {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   &-Row {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   &-Item {
@@ -260,17 +317,22 @@ async function confirmDelete() {
 
   &-Editor {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
+    max-width: 560px;
   }
 
   &-Confirm {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {
     width: 100%;
     font-family: monospace;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>
