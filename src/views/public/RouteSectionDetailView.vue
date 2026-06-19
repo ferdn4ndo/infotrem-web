@@ -5,9 +5,12 @@ import { RouterLink, useRoute } from 'vue-router'
 import AppCard from '@/components/common/AppCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import RouteSectionLocationSummaryCard from '@/components/common/RouteSectionLocationSummaryCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
+import { type ResourceConfig } from '@/services/api/resources'
+import { useAuthStore } from '@/stores/auth.store'
 import { getResource } from '@/services/api/resources.api'
 import { listNested } from '@/services/api/social.api'
 import { getRouteTree } from '@/services/api/summary.api'
@@ -22,6 +25,7 @@ type RelationSection = {
 }
 
 const route = useRoute()
+const auth = useAuthStore()
 const item = ref<EntityRow | null>(null)
 const relationSections = ref<RelationSection[]>([])
 const kilometersByLocationId = ref<Record<string, EntityRow[]>>({})
@@ -32,6 +36,25 @@ let activeRequestId = 0
 const routeId = computed(() => String(route.params.routeId ?? ''))
 const sectionId = computed(() => String(route.params.sectionId ?? ''))
 const parentPath = computed(() => `/routes/${routeId.value}/sections/${sectionId.value}`)
+const sectionResource = computed<ResourceConfig>(() => ({
+  key: 'route-section',
+  label: 'Seções',
+  path: `/routes/${routeId.value}/sections`,
+  access: 'staff',
+  primaryFields: ['name', 'status', 'id'],
+  writeFields: ['name', 'status']
+}))
+const sectionLocationResource = computed<ResourceConfig>(() => ({
+  key: 'route-section-location',
+  label: 'Locais da seção',
+  path: `${parentPath.value}/locations`,
+  access: 'staff',
+  primaryFields: ['location_id', 'location_route_order', 'id'],
+  writeFields: ['location_id', 'location_route_order']
+}))
+const sectionLocations = computed(
+  () => relationSections.value.find((section) => section.key === 'locations')?.items ?? []
+)
 
 const relationConfigs = [
   {
@@ -227,6 +250,64 @@ watchEffect((onCleanup) => {
           <RoutableEntitySummaryCard v-else :item="related" :title-fields="section.titleFields" />
         </article>
       </template>
+    </section>
+
+    <section v-if="auth.isStaff" class="RouteSectionDetailView-Section">
+      <h2>Gerenciar relações da seção</h2>
+      <RelationManager
+        :relation="{
+          key: 'locations',
+          label: 'Locais da seção',
+          pathSuffix: 'locations',
+          parentParam: 'section_id',
+          access: 'staff',
+          primaryFields: ['location_id', 'location_route_order', 'id'],
+          writeFields: ['location_id', 'location_route_order']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <RelationManager
+        :relation="{
+          key: 'paths',
+          label: 'Linhas da seção',
+          pathSuffix: 'paths',
+          parentParam: 'section_id',
+          access: 'staff',
+          primaryFields: ['path_id', 'id'],
+          writeFields: ['path_id']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <RelationManager
+        :relation="{
+          key: 'information',
+          label: 'Informações',
+          pathSuffix: 'information',
+          parentParam: 'section_id',
+          access: 'public',
+          primaryFields: ['title', 'content', 'status', 'id'],
+          writeFields: ['information_id']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <section v-for="location in sectionLocations" :key="String(location.id)">
+        <RelationManager
+          :relation="{
+            key: 'kilometers',
+            label: `Marcos quilométricos do local ${location.location_id ?? location.id}`,
+            pathSuffix: 'kilometers',
+            parentParam: 'section_location_id',
+            access: 'staff',
+            primaryFields: ['kilometer', 'is_reference', 'id'],
+            writeFields: ['kilometer', 'is_reference']
+          }"
+          :parent-resource="sectionLocationResource"
+          :parent-id="String(location.id)"
+        />
+      </section>
     </section>
   </main>
 </template>

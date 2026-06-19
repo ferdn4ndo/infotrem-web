@@ -1,4 +1,5 @@
 type FeedMediaItem = {
+  mediaId: string
   title: string
   description: string
   mediaUrl: string

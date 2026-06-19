@@ -36,7 +36,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .EmailValidationView {
   width: 100%;
-  max-width: 720px;
+  max-width: $breakpoint-medium;
   margin: 0 auto;
   padding: var(--space-4);
 

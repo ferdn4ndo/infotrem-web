@@ -2,7 +2,15 @@ import { resourceForEntityType } from '@/services/api/resources'
 import type { EntityRow } from '@/types/domain/common.type'
 
 export type EntityRouteTarget = {
-  name: 'album-detail' | 'media-detail' | 'resource-detail' | 'route-section-detail'
+  name:
+    | 'album-detail'
+    | 'media-detail'
+    | 'resource-detail'
+    | 'route-section-detail'
+    | 'company-detail'
+    | 'location-detail'
+    | 'rolling-stock-detail'
+    | 'route-detail'
   params: Record<string, string>
 }
 
@@ -57,10 +65,6 @@ const entityLabels: Record<string, string> = {
 
 const parentRoutes: Record<string, ParentRouteConfig> = {
   company_information: { resource: 'companies', idField: 'company_id' },
-  company_paint_scheme_information: {
-    resource: 'paint-schemes',
-    idField: 'paint_scheme_id'
-  },
   location_city: {
     resource: 'states',
     idField: 'state_id',
@@ -71,21 +75,21 @@ const parentRoutes: Record<string, ParentRouteConfig> = {
   route_information: { resource: 'routes', idField: 'railroad_route_id' },
   route_section_information: {
     resource: 'routes',
-    idField: 'railroad_route_id',
-    reason:
-      'Route section information detail pages are not available yet; linked to the parent route.'
+    idField: 'railroad_route_id'
   },
   sigo_series_information: {
     resource: 'information',
-    idField: 'information_id',
-    reason:
-      'SIGO series information detail pages are not available yet; linked to the parent information record.'
+    idField: 'information_id'
   }
 }
 
 const directRoutes: Record<string, { name: EntityRouteTarget['name'] }> = {
   album: { name: 'album-detail' },
-  media: { name: 'media-detail' }
+  media: { name: 'media-detail' },
+  company: { name: 'company-detail' },
+  location: { name: 'location-detail' },
+  rolling_stock: { name: 'rolling-stock-detail' },
+  route: { name: 'route-detail' }
 }
 
 function idToString(value: unknown) {
@@ -106,6 +110,34 @@ export function routeForEntityRow(row: EntityRow): EntityRouteResolution {
   const directResource = resourceForEntityType(entityType)
   const directRoute = directRoutes[entityType]
   const directId = idToString(row.id)
+
+  if (entityType === 'company_paint_scheme_information') {
+    const companyId = idToString(row.company_id)
+    if (companyId) {
+      return {
+        label,
+        reason:
+          'Informações de pintura são tratadas dentro da empresa; direcionado para a empresa vinculada.',
+        target: {
+          name: 'company-detail',
+          params: { id: companyId }
+        }
+      }
+    }
+
+    const paintSchemeId = idToString(row.paint_scheme_id)
+    if (paintSchemeId) {
+      return {
+        label,
+        reason:
+          'Informações de pintura são tratadas dentro da empresa; direcionado para a pintura vinculada.',
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'paint-schemes', id: paintSchemeId }
+        }
+      }
+    }
+  }
 
   if (directRoute && directId) {
     return {
@@ -147,7 +179,43 @@ export function routeForEntityRow(row: EntityRow): EntityRouteResolution {
     }
   }
 
-  if (directResource && directId) {
+  if (entityType === 'sigo_series_information') {
+    const informationId = idToString(row.information_id)
+    if (informationId) {
+      return {
+        label,
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'information', id: informationId }
+        }
+      }
+    }
+  }
+
+  if (entityType === 'location_city') {
+    const stateId = idToString(row.state_id)
+    if (stateId) {
+      return {
+        label,
+        reason: 'City detail pages are not available yet; linked to the parent state.',
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'states', id: stateId }
+        }
+      }
+    }
+  }
+
+  if (
+    directResource &&
+    directId &&
+    ![
+      'route_section_information',
+      'sigo_series_information',
+      'location_city',
+      'company_paint_scheme_information'
+    ].includes(entityType)
+  ) {
     return {
       label,
       target: {

@@ -2,13 +2,16 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppTextarea from '@/components/common/AppTextarea.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
-import { getAlbum } from '@/services/api/albums.api'
+import { getAlbum, getAlbumDetail } from '@/services/api/albums.api'
 import {
   MEDIA_FALLBACK_LOGO_URL,
   mediaThumbnailUrl,
@@ -29,6 +32,7 @@ import type { EntityRow } from '@/types/domain/common.type'
 type RelationSection = {
   key: string
   label: string
+  detailKey: string
   items: EntityRow[]
   error: string | null
 }
@@ -52,23 +56,67 @@ const coverUrl = computed(() => {
 })
 
 const relationConfigs = [
-  { key: 'media', label: 'Mídia' },
-  { key: 'comments', label: 'Comentários' }
+  { key: 'media', detailKey: 'media', label: 'Mídia' },
+  { key: 'comments', detailKey: 'comments', label: 'Comentários' }
 ]
 
 async function loadRelation(key: string, label: string): Promise<RelationSection> {
   try {
     const response = await listNested(`/albums/${albumId.value}`, key)
 
-    return { key, label, items: response.items, error: null }
+    return { key, detailKey: key.replace(/-/g, '_'), label, items: response.items, error: null }
   } catch (error) {
     return {
       key,
       label,
+      detailKey: key.replace(/-/g, '_'),
       items: [],
       error: error instanceof Error ? error.message : `Não foi possível carregar ${label}.`
     }
   }
+}
+
+function toRelationItems(detail: EntityRow, detailKey: string): EntityRow[] {
+  const raw = detail[detailKey] ?? detail[detailKey.replace(/_/g, '-')]
+  if (Array.isArray(raw)) {
+    return raw as EntityRow[]
+  }
+  if (raw && typeof raw === 'object' && Array.isArray((raw as { items?: EntityRow[] }).items)) {
+    return (raw as { items: EntityRow[] }).items
+  }
+  return []
+}
+
+function mapAggregateSections(detail: EntityRow): RelationSection[] {
+  return relationConfigs.map((config) => ({
+    key: config.key,
+    detailKey: config.detailKey,
+    label: config.label,
+    items: toRelationItems(detail, config.detailKey),
+    error: null
+  }))
+}
+
+async function loadAlbumFallback(requestId: number, isCancelled: () => boolean) {
+  const loadedItem = await getAlbum(albumId.value)
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  item.value = loadedItem
+
+  const loadedSocialSummary = await getSocialSummary(`/albums/${albumId.value}`)
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  socialSummary.value = loadedSocialSummary
+
+  const loadedRelationSections = await Promise.all(
+    relationConfigs.map((config) => loadRelation(config.key, config.label))
+  )
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  relationSections.value = loadedRelationSections
 }
 
 async function loadAlbum(requestId: number, isCancelled: () => boolean) {
@@ -89,42 +137,27 @@ async function loadAlbum(requestId: number, isCancelled: () => boolean) {
   actionErrorMessage.value = null
 
   try {
-    const loadedItem = await getAlbum(albumId.value)
+    const detail = (await getAlbumDetail(albumId.value)) as EntityRow
     if (isCancelled() || requestId !== activeRequestId) {
-      if (requestId === activeRequestId) {
-        isLoading.value = false
-      }
       return
     }
-    item.value = loadedItem
-
-    const loadedSocialSummary = await getSocialSummary(`/albums/${albumId.value}`)
-    if (isCancelled() || requestId !== activeRequestId) {
-      if (requestId === activeRequestId) {
-        isLoading.value = false
-      }
-      return
-    }
-    socialSummary.value = loadedSocialSummary
-
-    const loadedRelationSections = await Promise.all(
-      relationConfigs.map((config) => loadRelation(config.key, config.label))
-    )
-    if (isCancelled() || requestId !== activeRequestId) {
-      if (requestId === activeRequestId) {
-        isLoading.value = false
-      }
-      return
-    }
-    relationSections.value = loadedRelationSections
+    item.value = (detail.album as AlbumRow | undefined) ?? (detail as AlbumRow)
+    socialSummary.value = (detail.social_summary as SocialSummary | null | undefined) ?? null
+    relationSections.value = mapAggregateSections(detail)
   } catch (error) {
-    if (isCancelled() || requestId !== activeRequestId) {
-      if (requestId === activeRequestId) {
-        isLoading.value = false
+    console.warn(
+      '[AlbumDetailView] Failed to load /albums/:id/detail; falling back to per-relation requests.',
+      error
+    )
+    try {
+      await loadAlbumFallback(requestId, isCancelled)
+    } catch (fallbackError) {
+      if (isCancelled() || requestId !== activeRequestId) {
+        return
       }
-      return
+      errorMessage.value =
+        fallbackError instanceof Error ? fallbackError.message : 'Não foi possível carregar álbum.'
     }
-    errorMessage.value = error instanceof Error ? error.message : 'Não foi possível carregar álbum.'
   } finally {
     if (requestId === activeRequestId) {
       isLoading.value = false
@@ -245,15 +278,15 @@ watchEffect((onCleanup) => {
         {{ socialSummary.likes_count }} curtidas ·
         {{ socialSummary.favorites_count ?? 0 }} favoritos
       </p>
-      <button
+      <AppButton
         v-if="auth.isLoggedIn"
         type="button"
         data-cy="album-like"
         @click="socialSummary?.liked ? deleteRelation('likes') : createRelation('likes')"
       >
         {{ socialSummary?.liked ? 'Remover curtida' : 'Curtir' }}
-      </button>
-      <button
+      </AppButton>
+      <AppButton
         v-if="auth.isLoggedIn"
         type="button"
         data-cy="album-favorite"
@@ -262,7 +295,7 @@ watchEffect((onCleanup) => {
         "
       >
         {{ socialSummary?.favorited ? 'Remover favorito' : 'Favoritar' }}
-      </button>
+      </AppButton>
       <RouterLink v-else to="/login">Entre para interagir</RouterLink>
     </section>
 
@@ -272,12 +305,21 @@ watchEffect((onCleanup) => {
     <section v-if="item" class="AlbumDetailView-Section">
       <h2>Novo comentário</h2>
       <form v-if="auth.isLoggedIn" data-cy="album-comment-form" @submit.prevent="createComment">
-        <textarea
-          v-model="commentText"
-          data-cy="album-comment-text"
-          placeholder="Escreva um comentário"
-        />
-        <button type="submit" data-cy="album-comment-submit">Comentar</button>
+        <AppField label="Comentário">
+          <template #default="{ id, required, disabled, ariaInvalid, ariaDescribedby }">
+            <AppTextarea
+              v-model="commentText"
+              :id="id"
+              :required="required"
+              :disabled="disabled"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="album-comment-text"
+              placeholder="Escreva um comentário"
+            />
+          </template>
+        </AppField>
+        <AppButton type="submit" data-cy="album-comment-submit">Comentar</AppButton>
       </form>
       <RouterLink v-else to="/login">Entre para comentar</RouterLink>
     </section>

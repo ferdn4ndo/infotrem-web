@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
 import {
   isReviewDecision,
   reviewDecisionLabel,
@@ -108,6 +109,25 @@ async function saveReview(row: EntityRow) {
   }
 }
 
+async function decideReview(row: EntityRow, decision: ReviewDecision) {
+  const id = stringField(row, 'id')
+  if (!id) {
+    return
+  }
+
+  actionMessage.value = null
+  actionErrorMessage.value = null
+
+  try {
+    await updateNested(props.parentPath, 'reviews', id, { decision })
+    actionMessage.value = `Avaliação marcada como ${reviewDecisionLabel(decision).toLowerCase()}.`
+    emit('refresh')
+  } catch (error) {
+    actionErrorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível registrar a decisão da avaliação.'
+  }
+}
+
 async function deleteReview(row: EntityRow) {
   const id = stringField(row, 'id')
   if (!id) {
@@ -153,8 +173,42 @@ async function deleteReview(row: EntityRow) {
       </p>
 
       <div v-if="canManage(review)" class="ReviewSection-Actions">
-        <button type="button" data-cy="review-edit" @click="startEdit(review)">Editar</button>
-        <button type="button" data-cy="review-delete" @click="deleteReview(review)">Remover</button>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-approve"
+          @click="decideReview(review, 'approve')"
+        >
+          Aprovar
+        </AppButton>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-reject"
+          @click="decideReview(review, 'reject')"
+        >
+          Rejeitar
+        </AppButton>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-needs-changes"
+          @click="decideReview(review, 'needs_changes')"
+        >
+          Pedir ajustes
+        </AppButton>
+        <AppButton type="button" data-cy="review-edit" @click="startEdit(review)">Editar</AppButton>
+        <AppButton
+          type="button"
+          data-cy="review-delete"
+          variant="danger"
+          @click="deleteReview(review)"
+        >
+          Remover
+        </AppButton>
       </div>
 
       <form
@@ -184,8 +238,8 @@ async function deleteReview(row: EntityRow) {
             data-cy="review-comment"
           />
         </label>
-        <button type="submit" data-cy="review-submit">Salvar avaliação</button>
-        <button type="button" @click="cancelEdit(review)">Cancelar</button>
+        <AppButton type="submit" data-cy="review-submit">Salvar avaliação</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelEdit(review)">Cancelar</AppButton>
       </form>
     </article>
   </div>

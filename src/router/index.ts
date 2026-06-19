@@ -97,6 +97,26 @@ const router = createRouter({
       component: () => import('@/views/public/ResourceListView.vue')
     },
     {
+      path: '/companies/:id',
+      name: 'company-detail',
+      component: () => import('@/views/public/CompanyDetailView.vue')
+    },
+    {
+      path: '/locations/:id',
+      name: 'location-detail',
+      component: () => import('@/views/public/LocationDetailView.vue')
+    },
+    {
+      path: '/rolling-stock/:id',
+      name: 'rolling-stock-detail',
+      component: () => import('@/views/public/RollingStockDetailView.vue')
+    },
+    {
+      path: '/routes/:id',
+      name: 'route-detail',
+      component: () => import('@/views/public/RouteDetailView.vue')
+    },
+    {
       path: '/resources/:resource/:id',
       name: 'resource-detail',
       component: () => import('@/views/public/ResourceDetailView.vue'),
@@ -111,6 +131,22 @@ const router = createRouter({
         if (resource === 'albums') {
           return { name: 'album-detail', params: { id } }
         }
+
+        if (resource === 'companies') {
+          return { name: 'company-detail', params: { id } }
+        }
+
+        if (resource === 'locations') {
+          return { name: 'location-detail', params: { id } }
+        }
+
+        if (resource === 'rolling-stock') {
+          return { name: 'rolling-stock-detail', params: { id } }
+        }
+
+        if (resource === 'routes') {
+          return { name: 'route-detail', params: { id } }
+        }
       }
     },
     {
@@ -122,6 +158,12 @@ const router = createRouter({
       path: '/admin/resources/:resource',
       name: 'admin-resource',
       component: () => import('@/views/admin/AdminResourceView.vue'),
+      meta: { requiresStaff: true }
+    },
+    {
+      path: '/admin/review-moderation',
+      name: 'admin-review-moderation',
+      component: () => import('@/views/admin/ReviewModerationView.vue'),
       meta: { requiresStaff: true }
     },
     {

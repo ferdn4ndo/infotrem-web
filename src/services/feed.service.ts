@@ -4,6 +4,7 @@ import type { MediaRow } from '@/types/domain/media.type'
 
 const items: FeedMediaItem[] = [
   {
+    mediaId: 'mock-media-1',
     title: 'Alstom EC386 "Francesa" 2202 em Ourinhos-SP (ZOU)',
     mediaUrl: 'https://live.staticflickr.com/2031/1752049065_d39b64f886_h.jpg',
     mediaAlt: 'A foto contém a locomotiva Francesa Alston 2202 na estação de Ourinhos-SP (ZOU).',
@@ -15,6 +16,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Cristiano Bueno · data desconhecida'
   },
   {
+    mediaId: 'mock-media-2',
     title: 'G22U 4397 em Irati-PR (LIT)',
     mediaUrl: 'https://live.staticflickr.com/2165/1555001914_ccd9c3271f_b.jpg',
     mediaAlt:
@@ -27,6 +29,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Cristiano Bueno · data desconhecida'
   },
   {
+    mediaId: 'mock-media-3',
     title: 'GE B-B "Mini-Saia" 2121 em Maristela-SP (ZMI)',
     mediaUrl: 'https://live.staticflickr.com/2092/1752048971_2fe7535c5b_c.jpg',
     mediaAlt:
@@ -39,6 +42,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Cristiano Bueno · data desconhecida'
   },
   {
+    mediaId: 'mock-media-4',
     title: 'GE 1-C+C-1 "Loba" 2013 em Mairinque-SP (ZMK)',
     mediaUrl: 'https://live.staticflickr.com/2038/2263488997_d67ac371c4_b.jpg',
     mediaAlt:
@@ -51,6 +55,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Cristiano Bueno · data desconhecida'
   },
   {
+    mediaId: 'mock-media-5',
     title: 'TCD 341819-7 em Uberlândia-MG (ZUL)',
     mediaUrl: 'https://live.staticflickr.com/5062/5627895035_0fbe54dc31_h.jpg',
     mediaAlt: 'A foto contém o vagão TCD 341819-7 no pátio de Uberlândia-MG (ZUL).',
@@ -61,6 +66,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Johannes Smit · 1 de dezembro de 1994'
   },
   {
+    mediaId: 'mock-media-6',
     title: 'TCD 336414-3 em Uberlândia-MG (ZUL)',
     mediaUrl: 'https://live.staticflickr.com/5189/5627867413_1452aee44e_h.jpg',
     mediaAlt: 'A foto contém o vagão TCD 336414-3 no pátio de Uberlândia-MG (ZUL).',
@@ -71,6 +77,7 @@ const items: FeedMediaItem[] = [
     subtitle: 'Johannes Smit · 1 de dezembro de 1994'
   },
   {
+    mediaId: 'mock-media-7',
     title: 'HFD 314230-2 em Uberlândia-MG (ZUL)',
     mediaUrl: 'https://live.staticflickr.com/5307/5628130451_4698e8ec11_h.jpg',
     mediaAlt: 'A foto contém o vagão HFD 314230-2 no pátio de Uberlândia-MG (ZUL).',
@@ -165,6 +172,7 @@ function mediaRowToFeedItem(row: MediaRow): FeedMediaItem {
   const mediaDate = normalizeText(row.datetime_taken ?? row.created_at)
 
   return {
+    mediaId: String(row.id),
     title: String(row.title ?? row.name ?? row.id),
     mediaUrl: String(
       row.thumbnail_url ?? row.media_url ?? row.original_url ?? '/logo-light-bg.svg'

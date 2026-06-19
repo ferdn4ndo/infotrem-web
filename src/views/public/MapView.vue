@@ -182,19 +182,26 @@ onUnmounted(() => {
     />
 
     <AppCard class="MapView-MapCard">
-      <div ref="mapContainer" class="MapView-Container" data-cy="map-canvas" />
+      <div
+        ref="mapContainer"
+        class="MapView-Container"
+        data-cy="map-canvas"
+        role="region"
+        aria-label="Mapa interativo de resultados"
+      />
     </AppCard>
 
     <p v-if="items.length > 0" class="MapView-Summary">
       {{ mappedItemCount }} de {{ items.length }} resultados possuem coordenadas.
     </p>
 
-    <section class="MapView-Results" aria-live="polite">
+    <section class="MapView-Results" aria-live="polite" aria-label="Lista de resultados do mapa">
       <RoutableEntitySummaryCard
         v-for="(item, index) in items"
         :key="`${item.entity_type}-${item.id ?? index}`"
         class="MapView-Result"
         data-cy="map-result"
+        tabindex="0"
         :item="item"
         :title-fields="['title', 'name', 'code', 'entity_type', 'id']"
       >

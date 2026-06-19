@@ -1,5 +1,6 @@
 import type { MenuItem } from '~/types/menu-item.type'
 import type { MenuList } from '~/types/menu-list.type'
+import { adminResources, domainResources } from '@/services/api/resources'
 
 const items: MenuList = [
   { id: 1, icon: 'fa-home', title: 'Home', path: '/', children: null },
@@ -89,10 +90,40 @@ const items: MenuList = [
         requiresAuth: true,
         requiresStaff: true,
         children: null
+      },
+      {
+        id: 153,
+        icon: 'fa-user-secret',
+        title: 'Moderar avaliações',
+        path: '/admin/review-moderation',
+        requiresAuth: true,
+        requiresStaff: true,
+        children: null
       }
     ]
   }
 ]
+
+function toMenuTitle(label: string) {
+  return label
+}
+
+function buildCatalogChildren(
+  resources: { key: string; label: string; access: 'public' | 'auth' | 'staff' | 'admin' }[],
+  baseId: number,
+  basePath: string
+) {
+  return resources.map((resource, index) => ({
+    id: baseId + index,
+    icon: 'fa-folder-open',
+    title: toMenuTitle(resource.label),
+    path: `${basePath}/${resource.key}`,
+    requiresAuth: resource.access !== 'public',
+    requiresStaff: resource.access === 'staff' || resource.access === 'admin',
+    requiresAdmin: resource.access === 'admin',
+    children: null
+  }))
+}
 
 function canAccess(
   item: MenuItem,
@@ -116,7 +147,30 @@ function canAccess(
 }
 
 export function getAll(isLoggedIn: boolean, isStaff: boolean, isAdmin: boolean): MenuItem[] {
-  return items
+  const catalogItems: MenuItem[] = isStaff
+    ? [
+        {
+          id: 16,
+          icon: 'fa-book-open',
+          title: 'Catálogo',
+          path: null,
+          requiresAuth: true,
+          requiresStaff: true,
+          children: buildCatalogChildren(domainResources, 1600, '/resources')
+        },
+        {
+          id: 17,
+          icon: 'fa-screwdriver-wrench',
+          title: 'Gerenciar',
+          path: null,
+          requiresAuth: true,
+          requiresStaff: true,
+          children: buildCatalogChildren(adminResources, 1700, '/admin/resources')
+        }
+      ]
+    : []
+
+  return [...items, ...catalogItems]
     .filter((item) => canAccess(item, isLoggedIn, isStaff, isAdmin))
     .map((item) => ({
       ...item,

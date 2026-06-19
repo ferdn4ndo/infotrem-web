@@ -11,6 +11,13 @@ export type InformationSummary = {
   current_vote?: EntityRow | null
 }
 
+export type CompanySummary = {
+  company?: EntityRow | null
+  information?: EntityRow[]
+  paint_schemes?: EntityRow[]
+  [key: string]: unknown
+}
+
 export function getInformationSummary(informationId: string) {
   return apiClient.get<InformationSummary>(`/information/${informationId}/summary`)
 }
@@ -24,7 +31,7 @@ export function getRollingStockSummary(rollingStockId: string) {
 }
 
 export function getCompanySummary(companyId: string) {
-  return apiClient.get<EntityRow>(`/companies/${companyId}/summary`)
+  return apiClient.get<CompanySummary>(`/companies/${companyId}/summary`)
 }
 
 export function getRouteTree(routeId: string) {

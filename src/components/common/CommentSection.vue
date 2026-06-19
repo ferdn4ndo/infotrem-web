@@ -2,6 +2,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import {
   createCommentLike,
   createNestedComment,
@@ -32,6 +33,7 @@ const editingByRelationId = ref<Record<string, string>>({})
 const replyingByCommentId = ref<Record<string, string>>({})
 const summariesByCommentId = ref<Record<string, SocialSummary>>({})
 const maxDepth = 3
+const expandedThreadIds = ref<Record<string, boolean>>({})
 const loadedSummaryIds = new Set<string>()
 let summaryRequestId = 0
 let isUnmounted = false
@@ -113,7 +115,8 @@ const threadedItems = computed<ThreadItem[]>(() => {
 
     const parentId = repliesToFor(row)
     const children = childrenByParent[commentId] ?? []
-    const isCollapsed = depth >= maxDepth - 1 && children.length > 0
+    const isCollapsed =
+      depth >= maxDepth - 1 && children.length > 0 && !expandedThreadIds.value[commentId]
 
     ordered.push({
       row,
@@ -189,6 +192,13 @@ function toggleReply(row: EntityRow) {
   replyingByCommentId.value = {
     ...replyingByCommentId.value,
     [commentId]: replyingByCommentId.value[commentId] ?? ''
+  }
+}
+
+function toggleExpandedReplies(commentId: string) {
+  expandedThreadIds.value = {
+    ...expandedThreadIds.value,
+    [commentId]: !expandedThreadIds.value[commentId]
   }
 }
 
@@ -318,6 +328,17 @@ watch(
       summariesByCommentId.value = nextSummaries
     }
 
+    const staleExpandedIds = Object.keys(expandedThreadIds.value).filter(
+      (id) => !currentIdSet.has(id)
+    )
+    if (staleExpandedIds.length > 0) {
+      const nextExpanded = { ...expandedThreadIds.value }
+      for (const staleId of staleExpandedIds) {
+        delete nextExpanded[staleId]
+      }
+      expandedThreadIds.value = nextExpanded
+    }
+
     const idsToFetch = ids.filter((id) => !loadedSummaryIds.has(id))
     if (idsToFetch.length === 0) {
       return
@@ -374,6 +395,16 @@ onUnmounted(() => {
       <p v-if="thread.hiddenRepliesCount > 0" class="CommentSection-Collapsed">
         {{ thread.hiddenRepliesCount }} resposta(s) adicional(is) ocultas para manter a leitura.
       </p>
+      <AppButton
+        v-if="thread.hiddenRepliesCount > 0"
+        type="button"
+        variant="ghost"
+        data-cy="comment-expand-replies"
+        :aria-expanded="Boolean(expandedThreadIds[thread.commentId])"
+        @click="toggleExpandedReplies(thread.commentId)"
+      >
+        {{ expandedThreadIds[thread.commentId] ? 'Ocultar respostas' : 'Expandir respostas' }}
+      </AppButton>
 
       <p class="CommentSection-Text">{{ commentTextFor(thread.row) || 'Comentário sem texto.' }}</p>
 
@@ -385,38 +416,39 @@ onUnmounted(() => {
       </p>
 
       <div class="CommentSection-Actions">
-        <button
+        <AppButton
           v-if="auth.isLoggedIn"
           type="button"
           data-cy="comment-like"
           @click="toggleLike(thread.row)"
         >
           {{ summariesByCommentId[thread.commentId]?.liked ? 'Remover curtida' : 'Curtir' }}
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="auth.isLoggedIn"
           type="button"
           data-cy="comment-reply"
           @click="toggleReply(thread.row)"
         >
           Responder
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="canManage(thread.row)"
           type="button"
           data-cy="comment-edit"
           @click="startEdit(thread.row)"
         >
           Editar
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="canManage(thread.row)"
           type="button"
           data-cy="comment-delete"
+          variant="danger"
           @click="removeComment(thread.row)"
         >
           Remover
-        </button>
+        </AppButton>
         <RouterLink v-if="!auth.isLoggedIn" to="/login">Entre para interagir</RouterLink>
       </div>
 
@@ -427,9 +459,12 @@ onUnmounted(() => {
         <textarea
           v-model="editingByRelationId[rowId(thread.row) ?? '']"
           data-cy="comment-edit-text"
+          aria-label="Editar comentário"
         />
-        <button type="submit" data-cy="comment-edit-submit">Salvar</button>
-        <button type="button" @click="cancelEdit(thread.row)">Cancelar</button>
+        <AppButton type="submit" data-cy="comment-edit-submit">Salvar</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelEdit(thread.row)"
+          >Cancelar</AppButton
+        >
       </form>
 
       <form
@@ -440,9 +475,12 @@ onUnmounted(() => {
           v-model="replyingByCommentId[commentIdFor(thread.row) ?? '']"
           data-cy="comment-reply-text"
           placeholder="Responder comentário"
+          aria-label="Responder comentário"
         />
-        <button type="submit" data-cy="comment-reply-submit">Responder</button>
-        <button type="button" @click="cancelReply(thread.row)">Cancelar</button>
+        <AppButton type="submit" data-cy="comment-reply-submit">Responder</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelReply(thread.row)"
+          >Cancelar</AppButton
+        >
       </form>
     </article>
   </div>

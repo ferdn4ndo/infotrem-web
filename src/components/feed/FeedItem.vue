@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
+
 import AppCard from '@/components/common/AppCard.vue'
 import MediaBasicInfoTable from '@/components/table/MediaBasicInfoTable.vue'
 import { toFallbackImage } from '@/services/api/media.api'
@@ -11,9 +13,11 @@ defineProps<{
 
 <template>
   <AppCard class="FeedItem">
-    <div class="FeedItem-Title">
-      {{ mediaItem.title }}
-    </div>
+    <RouterLink class="FeedItem-TitleLink" :to="`/media/${mediaItem.mediaId}`">
+      <div class="FeedItem-Title">
+        {{ mediaItem.title }}
+      </div>
+    </RouterLink>
 
     <div class="FeedItem-SubTitle">
       {{ mediaItem.subtitle }}
@@ -36,6 +40,16 @@ defineProps<{
 
 <style lang="scss" scoped>
 .FeedItem {
+  &-TitleLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-border);
+      outline-offset: 2px;
+    }
+  }
+
   &-Title {
     font-size: var(--font-size-lg);
     font-weight: bold;

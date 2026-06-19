@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
@@ -41,7 +42,9 @@ async function submitLogin() {
             required
           />
         </label>
-        <button type="submit" data-cy="login-submit" :disabled="auth.isLoading">Entrar</button>
+        <AppButton type="submit" data-cy="login-submit" :disabled="auth.isLoading"
+          >Entrar</AppButton
+        >
         <StatusMessage v-if="auth.isLoading" state="loading" message="Entrando..." />
         <StatusMessage v-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
       </form>

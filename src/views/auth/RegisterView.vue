@@ -2,7 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -37,23 +40,52 @@ async function submitRegister() {
     <h1>Criar conta</h1>
     <AppCard>
       <form class="AuthView-Form" @submit.prevent="submitRegister">
-        <label>
-          Nome
-          <input v-model="name" autocomplete="name" />
-        </label>
-        <label>
-          Usuário
-          <input v-model="username" autocomplete="username" />
-        </label>
-        <label>
-          E-mail
-          <input v-model="email" type="email" autocomplete="email" required />
-        </label>
-        <label>
-          Senha
-          <input v-model="password" type="password" autocomplete="new-password" required />
-        </label>
-        <button type="submit" :disabled="auth.isLoading">Cadastrar</button>
+        <AppField label="Nome">
+          <template #default="{ id }">
+            <AppInput v-model="name" :id="id" autocomplete="name" data-cy="register-name" />
+          </template>
+        </AppField>
+        <AppField label="Usuário">
+          <template #default="{ id }">
+            <AppInput
+              v-model="username"
+              :id="id"
+              autocomplete="username"
+              data-cy="register-username"
+            />
+          </template>
+        </AppField>
+        <AppField label="E-mail" required>
+          <template #default="{ id, required, ariaInvalid, ariaDescribedby }">
+            <AppInput
+              v-model="email"
+              :id="id"
+              type="email"
+              autocomplete="email"
+              :required="required"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="register-email"
+            />
+          </template>
+        </AppField>
+        <AppField label="Senha" required>
+          <template #default="{ id, required, ariaInvalid, ariaDescribedby }">
+            <AppInput
+              v-model="password"
+              :id="id"
+              type="password"
+              autocomplete="new-password"
+              :required="required"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="register-password"
+            />
+          </template>
+        </AppField>
+        <AppButton type="submit" :disabled="auth.isLoading" data-cy="register-submit"
+          >Cadastrar</AppButton
+        >
         <StatusMessage
           v-if="auth.isLoading"
           state="loading"
@@ -69,14 +101,14 @@ async function submitRegister() {
 <style scoped lang="scss">
 .AuthView {
   width: 100%;
-  max-width: 720px;
+  max-width: $breakpoint-medium;
   margin: 0 auto;
   padding: var(--space-4);
 
   &-Form {
     display: grid;
     gap: var(--space-3);
-    max-width: 420px;
+    max-width: min(100%, $breakpoint-small);
   }
 
   @media (max-width: $breakpoint-medium) {

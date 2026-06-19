@@ -73,8 +73,8 @@ watchEffect((onCleanup) => {
     <RouterLink
       v-if="field(item, 'location_id')"
       :to="{
-        name: 'resource-detail',
-        params: { resource: 'locations', id: field(item, 'location_id') }
+        name: 'location-detail',
+        params: { id: field(item, 'location_id') }
       }"
     >
       Local {{ locationLabel ?? field(item, 'location_id') }}

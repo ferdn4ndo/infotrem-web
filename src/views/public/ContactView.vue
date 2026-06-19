@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import { submitContact, type ContactPayload } from '@/services/api/contact.api'
@@ -74,7 +75,7 @@ async function sendContact() {
           Mensagem
           <textarea v-model="form.message" data-cy="contact-message" required />
         </label>
-        <button type="submit" data-cy="contact-submit" :disabled="isLoading">Enviar</button>
+        <AppButton type="submit" data-cy="contact-submit" :disabled="isLoading">Enviar</AppButton>
       </form>
     </AppCard>
   </main>

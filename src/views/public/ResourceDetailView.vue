@@ -2,35 +2,26 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
-import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
+import ResourceForm from '@/components/common/ResourceForm.vue'
+import SigoSeriesManager from '@/components/common/SigoSeriesManager.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import * as InformationApi from '@/services/api/information.api'
+import { canDelete, canEdit } from '@/services/api/permissions'
 import { findResource } from '@/services/api/resources'
-import { getResource } from '@/services/api/resources.api'
+import { deleteResource, getResource } from '@/services/api/resources.api'
 import * as SocialApi from '@/services/api/social.api'
-import { ApiError } from '@/services/http/api-error'
-import { getRouteTree } from '@/services/api/summary.api'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
-
-type RelationSectionConfig = {
-  key: string
-  label: string
-  titleFields: string[]
-  fallbackKeys?: string[]
-}
-
-type RelationSection = RelationSectionConfig & {
-  items: EntityRow[]
-  error: string | null
-}
-
-type SummaryVariant = 'auto' | 'path-point' | 'rolling-stock'
 
 type InformationVoteSummary = {
   total: number
@@ -45,8 +36,8 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const item = ref<EntityRow | null>(null)
-const relatedItems = ref<EntityRow[]>([])
-const relationSections = ref<RelationSection[]>([])
+const commentItems = ref<EntityRow[]>([])
+const informationEffects = ref<EntityRow[]>([])
 const informationVoteSummary = ref<InformationVoteSummary>({
   total: 0,
   up: 0,
@@ -62,11 +53,9 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
 const actionErrorMessage = ref<string | null>(null)
+const isEditingMain = ref(false)
+const confirmMainDeleteOpen = ref(false)
 let activeRequestId = 0
-
-function isStaleRequest(requestId: number) {
-  return requestId !== activeRequestId
-}
 
 const resource = computed(() => findResource(String(route.params.resource)))
 const currentId = computed(() => String(route.params.id ?? ''))
@@ -74,89 +63,23 @@ const parentPath = computed(() =>
   resource.value && route.params.id ? `${resource.value.path}/${String(route.params.id)}` : null
 )
 const supportsComments = computed(() => ['media', 'albums'].includes(String(resource.value?.key)))
-const supportsReactions = computed(() =>
-  ['media', 'albums', 'comments'].includes(String(resource.value?.key))
-)
 const supportsInformationContributions = computed(() => resource.value?.key === 'information')
-const relationConfigs = computed(
-  () => resourceRelationConfigs[String(resource.value?.key ?? '')] ?? []
+const canEditMain = computed(() => (resource.value ? canEdit(resource.value, auth) : false))
+const canDeleteMain = computed(() => (resource.value ? canDelete(resource.value, auth) : false))
+const visibleRelations = computed(() =>
+  (resource.value?.relations ?? []).filter((relation) => {
+    if (supportsComments.value && relation.pathSuffix === 'comments') {
+      return false
+    }
+    if (
+      supportsInformationContributions.value &&
+      ['effects', 'votes', 'sigo-series'].includes(relation.pathSuffix)
+    ) {
+      return false
+    }
+    return true
+  })
 )
-
-const resourceRelationConfigs: Record<string, RelationSectionConfig[]> = {
-  companies: [
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] },
-    { key: 'paint-schemes', label: 'Pinturas', titleFields: ['name', 'status', 'id'] }
-  ],
-  manufacturers: [
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] }
-  ],
-  locations: [
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] },
-    { key: 'paths', label: 'Linhas', titleFields: ['name', 'code', 'path_id', 'id'] },
-    { key: 'track-gauges', label: 'Bitolas', titleFields: ['name', 'code', 'gauge_id', 'id'] }
-  ],
-  paths: [
-    { key: 'locations', label: 'Locais', titleFields: ['name', 'code', 'location_id', 'id'] },
-    {
-      key: 'points',
-      label: 'Pontos da linha',
-      titleFields: ['order', 'latitude', 'longitude', 'id']
-    }
-  ],
-  routes: [
-    { key: 'sections', label: 'Seções', titleFields: ['name', 'status', 'id'] },
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] }
-  ],
-  'rolling-stock': [
-    { key: 'media', label: 'Mídia', titleFields: ['title', 'description', 'media_id', 'id'] },
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] },
-    {
-      key: 'locomotives',
-      label: 'Locomotivas',
-      titleFields: ['id', 'rolling_stock_id', 'design_id']
-    },
-    {
-      key: 'freight-cars',
-      label: 'Vagões de carga',
-      titleFields: ['number', 'prefix', 'freight_car_type_id', 'id'],
-      fallbackKeys: ['freight-car']
-    },
-    {
-      key: 'passenger-cars',
-      label: 'Carros de passageiros',
-      titleFields: ['number', 'prefix', 'passenger_car_type_id', 'id'],
-      fallbackKeys: ['passenger-car']
-    },
-    {
-      key: 'non-revenue-cars',
-      label: 'Veículos de serviço',
-      titleFields: ['number', 'prefix', 'non_revenue_car_type_id', 'id'],
-      fallbackKeys: ['non-revenue-car']
-    },
-    {
-      key: 'sigo-regionals',
-      label: 'Regionais SIGO',
-      titleFields: ['name', 'abbrev', 'letter', 'id']
-    }
-  ],
-  'paint-schemes': [
-    { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] }
-  ],
-  states: [{ key: 'cities', label: 'Cidades', titleFields: ['name', 'ibge_id', 'id'] }],
-  'track-gauges': [
-    { key: 'locations', label: 'Locais', titleFields: ['name', 'code', 'location_id', 'id'] }
-  ],
-  'locomotive-designs': [
-    { key: 'gauges', label: 'Bitolas', titleFields: ['code', 'size', 'gauge_id', 'id'] }
-  ],
-  information: [
-    {
-      key: 'effects',
-      label: 'Propostas de alteração',
-      titleFields: ['field_name', 'old_value', 'new_value', 'id']
-    }
-  ]
-}
 
 function toNumber(value: unknown) {
   const numeric = Number(value)
@@ -168,7 +91,6 @@ function toVoteValue(value: unknown): -1 | 0 | 1 | null {
   if (numeric === -1 || numeric === 0 || numeric === 1) {
     return numeric
   }
-
   return null
 }
 
@@ -181,22 +103,12 @@ function deriveCurrentUserVoteFromVotes(votes: EntityRow[]) {
   if (!currentUserId) {
     return null
   }
-
   for (const row of votes) {
-    if (userIdForVoteRow(row) !== currentUserId) {
-      continue
-    }
-    const vote = toVoteValue(row.value)
-    if (vote !== null) {
-      return vote
+    if (userIdForVoteRow(row) === currentUserId) {
+      return toVoteValue(row.value)
     }
   }
-
   return null
-}
-
-function isInapplicableRelationError(error: unknown) {
-  return error instanceof ApiError && error.status === 404
 }
 
 function parseVoteSummary(summaryRow: EntityRow | null | undefined, votes: EntityRow[] = []) {
@@ -213,7 +125,6 @@ function parseVoteSummary(summaryRow: EntityRow | null | undefined, votes: Entit
   const currentVote = toVoteValue(
     currentVoteRow?.value ?? summaryRow?.current_user_vote_value ?? summaryRow?.current_vote_value
   )
-
   return {
     up,
     down,
@@ -225,9 +136,7 @@ function parseVoteSummary(summaryRow: EntityRow | null | undefined, votes: Entit
 
 async function loadInformationVoteSummary(requestId: number) {
   if (!supportsInformationContributions.value || !currentId.value) {
-    if (isStaleRequest(requestId)) {
-      return
-    }
+    informationEffects.value = []
     informationVoteSummary.value = {
       total: 0,
       up: 0,
@@ -240,10 +149,10 @@ async function loadInformationVoteSummary(requestId: number) {
 
   try {
     const summary = await InformationApi.getInformationSummaryRead(currentId.value)
-    if (isStaleRequest(requestId)) {
+    if (requestId !== activeRequestId) {
       return
     }
-    const effects = Array.isArray(summary.effects) ? summary.effects : []
+    informationEffects.value = Array.isArray(summary.effects) ? summary.effects : []
     const voteSummaryRow =
       (summary.vote_summary as EntityRow | undefined) ??
       (summary.votes_summary as EntityRow | undefined) ??
@@ -252,7 +161,6 @@ async function loadInformationVoteSummary(requestId: number) {
       voteSummaryRow,
       Array.isArray(summary.votes) ? summary.votes : []
     )
-
     informationVoteSummary.value = {
       ...parsed,
       currentUserVote:
@@ -262,19 +170,16 @@ async function loadInformationVoteSummary(requestId: number) {
             (summary.current_vote as EntityRow | undefined)?.value
         )
     }
-
-    relationSections.value = relationSections.value.map((section) =>
-      section.key === 'effects' && effects.length > 0
-        ? { ...section, items: effects, error: null }
-        : section
-    )
   } catch (error) {
     console.warn(
-      '[ResourceDetailView] Failed to load /information/:id/summary; falling back to /information/:id/votes.',
+      '[ResourceDetailView] Falha ao carregar /information/:id/summary. Fallback para votos/effects.',
       error
     )
-    const voteRows = await InformationApi.listInformationVotes(currentId.value)
-    if (isStaleRequest(requestId)) {
+    const [voteRows, effectRows] = await Promise.all([
+      InformationApi.listInformationVotes(currentId.value),
+      SocialApi.listNested(`/information/${currentId.value}`, 'effects')
+    ])
+    if (requestId !== activeRequestId) {
       return
     }
     const values = voteRows.items
@@ -287,101 +192,32 @@ async function loadInformationVoteSummary(requestId: number) {
       total: values.length,
       currentUserVote: deriveCurrentUserVoteFromVotes(voteRows.items)
     }
+    informationEffects.value = effectRows.items
   }
 }
 
-async function loadRelationWithFallback(config: RelationSectionConfig): Promise<RelationSection> {
-  if (!parentPath.value) {
-    return { ...config, items: [], error: null }
+async function loadComments(requestId: number) {
+  if (!supportsComments.value || !parentPath.value) {
+    commentItems.value = []
+    return
   }
-
-  const attemptKeys = [config.key, ...(config.fallbackKeys ?? [])]
-  let primaryError: unknown = null
-  for (const [index, relationKey] of attemptKeys.entries()) {
-    try {
-      const response = await SocialApi.listNested(parentPath.value, relationKey)
-      return { ...config, key: relationKey, items: response.items, error: null }
-    } catch (error) {
-      if (index === 0) {
-        primaryError = error
-      }
-      const isPrimary = index === 0
-      const isInapplicableMiss = isInapplicableRelationError(error)
-      if (isPrimary && !isInapplicableMiss) {
-        console.warn(
-          `[ResourceDetailView] Failed to load primary relation "${config.key}" for ${parentPath.value}.`,
-          error
-        )
-      }
-      if (!isPrimary) {
-        console.warn(
-          `[ResourceDetailView] Failed fallback relation "${relationKey}" for ${parentPath.value}.`,
-          error
-        )
-      }
-    }
+  const response = await SocialApi.listNested(parentPath.value, 'comments')
+  if (requestId !== activeRequestId) {
+    return
   }
-
-  return {
-    ...config,
-    items: [],
-    error:
-      primaryError instanceof Error
-        ? primaryError.message
-        : `Não foi possível carregar ${config.label}.`
-  }
+  commentItems.value = response.items
 }
 
-async function loadRelatedItems(requestId: number) {
-  if (!parentPath.value) {
-    if (isStaleRequest(requestId)) {
-      return
-    }
-    relatedItems.value = []
-    relationSections.value = []
-    return
-  }
-
-  if (supportsComments.value) {
-    const response = await SocialApi.listNested(parentPath.value, 'comments')
-    if (isStaleRequest(requestId)) {
-      return
-    }
-    relatedItems.value = response.items
-  } else {
-    if (isStaleRequest(requestId)) {
-      return
-    }
-    relatedItems.value = []
-  }
-
-  const loadedSections = await Promise.all(relationConfigs.value.map(loadRelationWithFallback))
-  if (isStaleRequest(requestId)) {
-    return
-  }
-  relationSections.value = loadedSections
-
-  if (resource.value?.key === 'routes') {
-    try {
-      const tree = await getRouteTree(currentId.value)
-      if (isStaleRequest(requestId)) {
-        return
-      }
-      const sectionRows = (Array.isArray(tree.sections) ? tree.sections : []) as EntityRow[]
-      if (sectionRows.length > 0) {
-        relationSections.value = relationSections.value.map((section) =>
-          section.key === 'sections' ? { ...section, items: sectionRows, error: null } : section
-        )
-      }
-    } catch (error) {
-      console.warn(
-        '[ResourceDetailView] Failed to load /routes/:id/tree; keeping nested sections fallback.',
-        error
-      )
-    }
-  }
-
-  await loadInformationVoteSummary(requestId)
+async function loadSecondaryRelations(requestId: number) {
+  const relationLoads = [
+    loadComments(requestId).catch((error) => {
+      console.warn('[ResourceDetailView] Falha ao carregar comentários.', error)
+    }),
+    loadInformationVoteSummary(requestId).catch((error) => {
+      console.warn('[ResourceDetailView] Falha ao carregar contribuições da informação.', error)
+    })
+  ]
+  await Promise.all(relationLoads)
 }
 
 watchEffect((onCleanup) => {
@@ -415,20 +251,29 @@ watchEffect((onCleanup) => {
         return
       }
       item.value = loadedItem
-      await loadRelatedItems(requestId)
     } catch (error) {
       if (cancelled || requestId !== activeRequestId) {
         return
       }
       errorMessage.value =
         error instanceof Error ? error.message : 'Não foi possível carregar o registro.'
+      return
     } finally {
+      await loadSecondaryRelations(requestId)
       if (!cancelled && requestId === activeRequestId) {
         isLoading.value = false
       }
     }
   })()
 })
+
+async function refreshViewData() {
+  const requestId = ++activeRequestId
+  await Promise.all([loadComments(requestId), loadInformationVoteSummary(requestId)])
+  if (resource.value) {
+    item.value = await getResource(resource.value.path, currentId.value)
+  }
+}
 
 async function createComment() {
   if (!parentPath.value || !commentText.value.trim()) {
@@ -442,34 +287,11 @@ async function createComment() {
     await SocialApi.createNestedComment(parentPath.value, commentText.value.trim())
     commentText.value = ''
     actionMessage.value = 'Comentário publicado.'
-    const requestId = ++activeRequestId
-    await loadRelatedItems(requestId)
+    await refreshViewData()
   } catch (error) {
     actionErrorMessage.value =
       error instanceof Error ? error.message : 'Não foi possível publicar o comentário.'
   }
-}
-
-async function createRelation(relation: string) {
-  if (!parentPath.value) {
-    return
-  }
-
-  actionErrorMessage.value = null
-  actionMessage.value = null
-
-  try {
-    await SocialApi.createNested(parentPath.value, relation)
-    actionMessage.value = relation === 'likes' ? 'Curtido.' : 'Favoritado.'
-  } catch (error) {
-    actionErrorMessage.value =
-      error instanceof Error ? error.message : 'Não foi possível registrar a ação.'
-  }
-}
-
-async function refreshRelatedItems() {
-  const requestId = ++activeRequestId
-  await loadRelatedItems(requestId)
 }
 
 async function createInformationEffect() {
@@ -490,8 +312,7 @@ async function createInformationEffect() {
     effectOldValue.value = ''
     effectNewValue.value = ''
     actionMessage.value = 'Proposta enviada.'
-    const requestId = ++activeRequestId
-    await loadRelatedItems(requestId)
+    await refreshViewData()
   } catch (error) {
     actionErrorMessage.value =
       error instanceof Error ? error.message : 'Não foi possível enviar a proposta.'
@@ -509,33 +330,27 @@ async function voteOnInformation(value: -1 | 0 | 1) {
   try {
     await InformationApi.createInformationVote(currentId.value, value)
     actionMessage.value = 'Voto registrado.'
-    const requestId = ++activeRequestId
-    await loadInformationVoteSummary(requestId)
+    await refreshViewData()
   } catch (error) {
     actionErrorMessage.value =
       error instanceof Error ? error.message : 'Não foi possível registrar o voto.'
   }
 }
 
-function summaryVariant(sectionKey: string): SummaryVariant {
-  if (sectionKey === 'points') {
-    return 'path-point'
+async function handleDeleteMainRecord() {
+  if (!resource.value || !item.value?.id) {
+    return
   }
-
-  if (
-    [
-      'freight-car',
-      'passenger-car',
-      'non-revenue-car',
-      'freight-cars',
-      'passenger-cars',
-      'non-revenue-cars'
-    ].includes(sectionKey)
-  ) {
-    return 'rolling-stock'
+  actionErrorMessage.value = null
+  actionMessage.value = null
+  try {
+    await deleteResource(resource.value.path, String(item.value.id))
+    confirmMainDeleteOpen.value = false
+    await router.push({ name: 'resource-list', params: { resource: resource.value.key } })
+  } catch (error) {
+    actionErrorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível excluir o registro.'
   }
-
-  return 'auto'
 }
 </script>
 
@@ -565,25 +380,44 @@ function summaryVariant(sectionKey: string): SummaryVariant {
         :title-fields="resource.primaryFields"
         :detail-fields="resource.detailFields"
       />
+      <div v-if="canEditMain || canDeleteMain" class="ResourceDetailView-MainActions">
+        <AppButton v-if="canEditMain" type="button" variant="ghost" @click="isEditingMain = true">
+          Editar
+        </AppButton>
+        <AppButton
+          v-if="canDeleteMain"
+          type="button"
+          variant="danger"
+          @click="confirmMainDeleteOpen = true"
+        >
+          Excluir
+        </AppButton>
+      </div>
+    </AppCard>
+
+    <AppCard v-if="isEditingMain && resource && item" class="ResourceDetailView-EditCard">
+      <h2>Editar registro</h2>
+      <ResourceForm
+        :resource="resource"
+        :record="item"
+        submit-label="Salvar"
+        @saved="
+          async (saved) => {
+            item = saved
+            isEditingMain = false
+            await refreshViewData()
+          }
+        "
+        @cancel="isEditingMain = false"
+      />
     </AppCard>
 
     <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
     <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
 
-    <section v-if="item && supportsReactions" class="ResourceDetailView-Actions">
-      <h2>Ações</h2>
-      <button v-if="auth.isLoggedIn" type="button" @click="createRelation('likes')">Curtir</button>
-      <button
-        v-if="auth.isLoggedIn && resource?.key !== 'comments'"
-        type="button"
-        @click="createRelation('favorites')"
-      >
-        Favoritar
-      </button>
-      <RouterLink v-if="auth.isLoggedIn && resource?.key === 'media'" to="/upload/media">
-        Enviar arquivo
-      </RouterLink>
-      <RouterLink v-if="!auth.isLoggedIn" to="/login">Entre para interagir</RouterLink>
+    <section v-if="item && resource?.key === 'media'" class="ResourceDetailView-Actions">
+      <RouterLink v-if="auth.isLoggedIn" to="/upload/media">Enviar arquivo</RouterLink>
+      <RouterLink v-else to="/login">Entre para interagir</RouterLink>
     </section>
 
     <section v-if="item && supportsInformationContributions" class="ResourceDetailView-Relation">
@@ -597,77 +431,78 @@ function summaryVariant(sectionKey: string): SummaryVariant {
       </p>
       <template v-if="auth.isLoggedIn">
         <div class="ResourceDetailView-Votes">
-          <button type="button" @click="voteOnInformation(1)">Concordo</button>
-          <button type="button" @click="voteOnInformation(0)">Neutro</button>
-          <button type="button" @click="voteOnInformation(-1)">Discordo</button>
+          <AppButton type="button" @click="voteOnInformation(1)">Concordo</AppButton>
+          <AppButton type="button" @click="voteOnInformation(0)">Neutro</AppButton>
+          <AppButton type="button" @click="voteOnInformation(-1)">Discordo</AppButton>
         </div>
 
         <form class="ResourceDetailView-EffectForm" @submit.prevent="createInformationEffect">
-          <label>
-            Campo
-            <input v-model="effectFieldName" placeholder="nome do campo" />
-          </label>
-          <label>
-            Valor atual
-            <input v-model="effectOldValue" placeholder="Opcional" />
-          </label>
-          <label>
-            Valor proposto
-            <input v-model="effectNewValue" />
-          </label>
-          <button type="submit">Propor alteração</button>
+          <AppField label="Campo" required>
+            <template #default="{ id, required }">
+              <AppInput :id="id" v-model="effectFieldName" :required="required" />
+            </template>
+          </AppField>
+          <AppField label="Valor atual">
+            <template #default="{ id }">
+              <AppInput :id="id" v-model="effectOldValue" />
+            </template>
+          </AppField>
+          <AppField label="Valor proposto" required>
+            <template #default="{ id, required }">
+              <AppInput :id="id" v-model="effectNewValue" :required="required" />
+            </template>
+          </AppField>
+          <AppButton type="submit">Propor alteração</AppButton>
         </form>
       </template>
       <RouterLink v-else to="/login">Entre para votar ou propor alterações</RouterLink>
+      <div class="ResourceDetailView-Effects">
+        <EntityCard
+          v-for="effect in informationEffects"
+          :key="String(effect.id)"
+          :item="effect"
+          :title-fields="['field_name', 'new_value', 'id']"
+        />
+      </div>
     </section>
+
+    <SigoSeriesManager v-if="supportsInformationContributions" :information-id="currentId" />
 
     <section v-if="supportsComments" class="ResourceDetailView-Comments">
       <h2>Comentários</h2>
       <form v-if="auth.isLoggedIn" @submit.prevent="createComment">
-        <textarea v-model="commentText" placeholder="Escreva um comentário" />
-        <button type="submit">Comentar</button>
+        <AppField label="Comentário" required>
+          <template #default="{ id, required }">
+            <AppInput :id="id" v-model="commentText" :required="required" />
+          </template>
+        </AppField>
+        <AppButton type="submit">Comentar</AppButton>
       </form>
       <CommentSection
         :parent-path="parentPath ?? ''"
-        :items="relatedItems"
-        @refresh="refreshRelatedItems"
+        :items="commentItems"
+        @refresh="refreshViewData"
       />
     </section>
 
-    <section
-      v-for="section in relationSections"
-      :key="section.key"
-      class="ResourceDetailView-Relation"
-    >
-      <h2>{{ section.label }}</h2>
-      <StatusMessage v-if="section.error" state="error" :message="section.error" />
-      <EmptyState
-        v-else-if="section.items.length === 0"
-        title="Nenhum registro encontrado"
-        description="Não há itens relacionados nesta seção."
+    <template v-if="resource">
+      <RelationManager
+        v-for="relation in visibleRelations"
+        :key="relation.key"
+        :relation="relation"
+        :parent-resource="resource"
+        :parent-id="currentId"
       />
-      <template v-else-if="resource?.key === 'routes' && section.key === 'sections'">
-        <RouterLink
-          v-for="related in section.items"
-          :key="String(related.id)"
-          :to="{
-            name: 'route-section-detail',
-            params: { routeId: String(route.params.id), sectionId: String(related.id) }
-          }"
-        >
-          <EntityCard :item="related" :title-fields="section.titleFields" />
-        </RouterLink>
-      </template>
-      <template v-else>
-        <RoutableEntitySummaryCard
-          v-for="related in section.items"
-          :key="String(related.id)"
-          :item="related"
-          :title-fields="section.titleFields"
-          :variant="summaryVariant(section.key)"
-        />
-      </template>
-    </section>
+    </template>
+
+    <ConfirmDialog
+      v-model="confirmMainDeleteOpen"
+      title="Confirmar exclusão"
+      message="Deseja realmente excluir este registro?"
+      confirm-label="Excluir"
+      @confirm="handleDeleteMainRecord"
+      @cancel="confirmMainDeleteOpen = false"
+    />
   </main>
 </template>
 
@@ -686,9 +521,23 @@ function summaryVariant(sectionKey: string): SummaryVariant {
     margin-top: var(--space-5);
   }
 
-  textarea {
-    width: 100%;
-    min-height: 90px;
+  &-Effects {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  &-MainActions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  &-EditCard {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
   }
 
   &-EffectForm,

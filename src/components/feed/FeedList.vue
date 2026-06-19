@@ -23,20 +23,13 @@ function feedItemKey(item: FeedMediaItem) {
 </template>
 
 <style lang="scss" scoped>
-@use '@/styles/variables.scss' as vars;
-
 .FeedList {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
 
   &-Item {
-    flex: 0 0 90%;
-
-    @media (min-width: vars.$breakpoint-large) {
-      flex: 0 0 80vw;
-    }
+    min-width: 0;
   }
 }
 </style>

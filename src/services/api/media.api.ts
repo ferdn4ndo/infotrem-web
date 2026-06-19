@@ -5,6 +5,18 @@ import type { EntityRow } from '@/types/domain/common.type'
 import type { MediaCreatePayload, MediaRow } from '@/types/domain/media.type'
 
 export const MEDIA_FALLBACK_LOGO_URL = '/logo-light-bg.svg'
+export type MediaDetail = {
+  media?: MediaRow
+  social_summary?: EntityRow
+  images?: EntityRow[]
+  image_sizes?: EntityRow[]
+  videos?: EntityRow[]
+  documents?: EntityRow[]
+  albums?: EntityRow[]
+  rolling_stock?: EntityRow[]
+  comments?: EntityRow[]
+  reviews?: EntityRow[]
+}
 
 export function listMedia(params: ListParams = {}) {
   return listResource<MediaRow>('/media', params)
@@ -12,6 +24,10 @@ export function listMedia(params: ListParams = {}) {
 
 export function getMedia(mediaId: string) {
   return getResource<MediaRow>('/media', mediaId)
+}
+
+export function getMediaDetail(mediaId: string) {
+  return apiClient.get<MediaDetail>(`/media/${mediaId}/detail`)
 }
 
 export function createMedia(payload: MediaCreatePayload) {

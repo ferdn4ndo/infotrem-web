@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
@@ -41,7 +42,7 @@ onMounted(loadHealth)
 
     <section class="OperationsView-Section">
       <h2>Saúde da API</h2>
-      <button type="button" :disabled="isLoading" @click="loadHealth">Consultar saúde</button>
+      <AppButton type="button" :disabled="isLoading" @click="loadHealth">Consultar saúde</AppButton>
       <StatusMessage v-if="isLoading" state="loading" message="Consultando saúde da API..." />
       <EmptyState
         v-else-if="!health"

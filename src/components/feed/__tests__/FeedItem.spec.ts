@@ -9,6 +9,7 @@ describe('FeedItem', () => {
     const wrapper = mount(FeedItem, {
       props: {
         mediaItem: {
+          mediaId: 'media-1',
           title: 'Mídia',
           description: 'Descrição',
           mediaUrl: '/broken-image.jpg',
@@ -21,6 +22,7 @@ describe('FeedItem', () => {
       },
       global: {
         stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
           AppCard: { template: '<article><slot /></article>' },
           MediaBasicInfoTable: { template: '<div />' }
         }

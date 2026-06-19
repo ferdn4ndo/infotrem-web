@@ -41,6 +41,11 @@ $color-secondary-dark-hover: rgba(78, 82, 86, 0.9);
 $color-secondary-dark-border: rgba(49, 51, 53, 0.9);
 $color-secondary-dark-active: rgba(93, 98, 105, 0.9);
 
+$color-danger-light-normal: #b30024;
+$color-danger-light-border: #8f001d;
+$color-danger-dark-normal: #d34763;
+$color-danger-dark-border: #bb2f4c;
+
 $color-input-dark-background: rgba(60, 60, 60, 0.9);
 $color-input-dark-focused: rgba(80, 80, 80, 0.9);
 $color-input-dark-border: rgba(85, 85, 85, 0.9);
@@ -73,6 +78,8 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
   --color-secondary-hover: #{$color-secondary-light-hover};
   --color-secondary-border: #{$color-secondary-light-border};
   --color-secondary-active: #{$color-secondary-light-active};
+  --color-danger-normal: #{$color-danger-light-normal};
+  --color-danger-border: #{$color-danger-light-border};
 
   --color-input-background: #{$color-input-light-background};
   --color-input-focused: #{$color-input-light-focused};
@@ -104,6 +111,8 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
     --color-secondary-hover: #{$color-secondary-dark-hover};
     --color-secondary-border: #{$color-secondary-dark-border};
     --color-secondary-active: #{$color-secondary-dark-active};
+    --color-danger-normal: #{$color-danger-dark-normal};
+    --color-danger-border: #{$color-danger-dark-border};
 
     --color-input-background: #{$color-input-dark-background};
     --color-input-focused: #{$color-input-dark-focused};
@@ -129,6 +138,8 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
   --color-secondary-hover: #{$color-secondary-light-hover};
   --color-secondary-border: #{$color-secondary-light-border};
   --color-secondary-active: #{$color-secondary-light-active};
+  --color-danger-normal: #{$color-danger-light-normal};
+  --color-danger-border: #{$color-danger-light-border};
   --color-input-background: #{$color-input-light-background};
   --color-input-focused: #{$color-input-light-focused};
   --color-input-border: #{$color-input-light-border};
@@ -152,6 +163,8 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
   --color-secondary-hover: #{$color-secondary-dark-hover};
   --color-secondary-border: #{$color-secondary-dark-border};
   --color-secondary-active: #{$color-secondary-dark-active};
+  --color-danger-normal: #{$color-danger-dark-normal};
+  --color-danger-border: #{$color-danger-dark-border};
   --color-input-background: #{$color-input-dark-background};
   --color-input-focused: #{$color-input-dark-focused};
   --color-input-border: #{$color-input-dark-border};

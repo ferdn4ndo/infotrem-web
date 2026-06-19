@@ -64,7 +64,7 @@ describe('ReviewSection', () => {
     mocks.deleteNested.mockResolvedValue({})
     const wrapper = mountSection()
 
-    await wrapper.get('button:nth-of-type(1)').trigger('click')
+    await wrapper.get('[data-cy="review-edit"]').trigger('click')
     await wrapper.get('select').setValue('needs_changes')
     await wrapper.get('textarea').setValue('Needs a source')
     await wrapper.get('form').trigger('submit')
@@ -75,8 +75,20 @@ describe('ReviewSection', () => {
     })
     expect(wrapper.emitted('refresh')).toBeTruthy()
 
-    await wrapper.get('button:nth-of-type(2)').trigger('click')
+    await wrapper.get('[data-cy="review-delete"]').trigger('click')
     expect(mocks.deleteNested).toHaveBeenCalledWith('/media/media-1', 'reviews', 'review-1')
+  })
+
+  it('allows staff moderation quick decisions', async () => {
+    mocks.auth.isStaff = true
+    mocks.updateNested.mockResolvedValue({})
+    const wrapper = mountSection({ created_by_id: 'user-2' })
+
+    await wrapper.get('[data-cy="review-approve"]').trigger('click')
+
+    expect(mocks.updateNested).toHaveBeenCalledWith('/media/media-1', 'reviews', 'review-1', {
+      decision: 'approve'
+    })
   })
 
   it('allows staff users to manage reviews they do not own', () => {
@@ -100,7 +112,7 @@ describe('ReviewSection', () => {
   it('validates empty review updates', async () => {
     const wrapper = mountSection({ decision: null, comment: '' })
 
-    await wrapper.get('button:nth-of-type(1)').trigger('click')
+    await wrapper.get('[data-cy="review-edit"]').trigger('click')
     await wrapper.get('select').setValue('')
     await wrapper.get('textarea').setValue('')
     await wrapper.get('form').trigger('submit')

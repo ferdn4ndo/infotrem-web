@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
@@ -219,10 +220,10 @@ watch(
           </option>
         </select>
       </label>
-      <button type="submit" :disabled="auth.isLoading">Salvar perfil</button>
-      <button type="button" :disabled="auth.isLoading" @click="resendEmailValidation">
+      <AppButton type="submit" :disabled="auth.isLoading">Salvar perfil</AppButton>
+      <AppButton type="button" :disabled="auth.isLoading" @click="resendEmailValidation">
         Reenviar validação de e-mail
-      </button>
+      </AppButton>
     </form>
   </main>
 </template>

@@ -8,8 +8,8 @@ describe('entity routing', () => {
     expect(routeForEntityRow({ entity_type: 'company', id: 'company-1' })).toEqual({
       label: 'Empresa',
       target: {
-        name: 'resource-detail',
-        params: { resource: 'companies', id: 'company-1' }
+        name: 'company-detail',
+        params: { id: 'company-1' }
       }
     })
   })
@@ -73,6 +73,41 @@ describe('entity routing', () => {
     })
   })
 
+  it('routes sigo series information to the parent information detail without dead-end reason', () => {
+    expect(
+      routeForEntityRow({
+        entity_type: 'sigo_series_information',
+        id: 'series-1',
+        information_id: 'info-1'
+      })
+    ).toEqual({
+      label: 'Informacao da serie SIGO',
+      target: {
+        name: 'resource-detail',
+        params: { resource: 'information', id: 'info-1' }
+      }
+    })
+  })
+
+  it('routes company paint scheme information to the owning company detail', () => {
+    expect(
+      routeForEntityRow({
+        entity_type: 'company_paint_scheme_information',
+        id: 'psi-1',
+        company_id: 'company-1',
+        paint_scheme_id: 'paint-1'
+      })
+    ).toEqual({
+      label: 'Informacao da pintura',
+      reason:
+        'Informações de pintura são tratadas dentro da empresa; direcionado para a empresa vinculada.',
+      target: {
+        name: 'company-detail',
+        params: { id: 'company-1' }
+      }
+    })
+  })
+
   it('explains unsupported entity types without generating a bad link', () => {
     expect(routeForEntityRow({ entity_type: 'unknown_table', id: 'row-1' })).toEqual({
       label: 'unknown table',
@@ -128,6 +163,18 @@ describe('entity routing', () => {
 
     for (const row of rows) {
       const resolution = routeForEntityRow(row)
+      if (row.entity_type === 'company_paint_scheme_information') {
+        expect(resolution).toEqual({
+          label: 'Informacao da pintura',
+          reason:
+            'Informações de pintura são tratadas dentro da empresa; direcionado para a pintura vinculada.',
+          target: {
+            name: 'resource-detail',
+            params: { resource: 'paint-schemes', id: '1' }
+          }
+        })
+        continue
+      }
 
       expect(resolution.target ?? resolution.reason).toBeTruthy()
     }
@@ -135,9 +182,21 @@ describe('entity routing', () => {
 
   it('keeps registry entity types aligned with known frontend route targets', () => {
     const resourcesWithEntityType = allResources.filter((resource) => Boolean(resource.entityType))
-    const dedicatedRoutes: Record<string, 'media-detail' | 'album-detail'> = {
+    const dedicatedRoutes: Record<
+      string,
+      | 'media-detail'
+      | 'album-detail'
+      | 'company-detail'
+      | 'location-detail'
+      | 'route-detail'
+      | 'rolling-stock-detail'
+    > = {
       media: 'media-detail',
-      album: 'album-detail'
+      album: 'album-detail',
+      company: 'company-detail',
+      location: 'location-detail',
+      route: 'route-detail',
+      rolling_stock: 'rolling-stock-detail'
     }
 
     for (const resource of resourcesWithEntityType) {
