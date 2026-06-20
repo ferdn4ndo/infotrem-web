@@ -99,7 +99,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="CompanyDetailView">
+  <section class="CompanyDetailView">
     <RouterLink to="/companies">Voltar para empresas</RouterLink>
 
     <h1>{{ company?.name ?? 'Empresa' }}</h1>
@@ -166,7 +166,7 @@ watchEffect((onCleanup) => {
         :parent-id="companyId"
       />
     </template>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

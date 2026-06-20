@@ -64,6 +64,8 @@ function handleProfileChevronClick() {
 </script>
 
 <template>
+  <a class="MainContent-SkipLink" href="#main-content">Pular para o conteúdo</a>
+
   <TheHeader
     class="MainContent-Header"
     :show-menu-button="!isDesktopViewport"
@@ -90,7 +92,11 @@ function handleProfileChevronClick() {
     <ProfileCollapseCard class="MainContent-Collapse" v-if="showProfileCollapseCard" />
   </Transition>
 
-  <main class="MainContent" :class="{ 'MainContent--with-sidebar': isDesktopViewport }">
+  <main
+    id="main-content"
+    class="MainContent"
+    :class="{ 'MainContent--with-sidebar': isDesktopViewport }"
+  >
     <RouterView />
   </main>
 </template>
@@ -133,6 +139,24 @@ function handleProfileChevronClick() {
 .fade-leave-to {
   opacity: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-fade-enter-active,
+  .slide-fade-leave-active,
+  .slide-from-top-enter-active,
+  .slide-from-top-leave-active,
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
+
+  .slide-fade-enter-from,
+  .slide-fade-leave-to,
+  .slide-from-top-enter-from,
+  .slide-from-top-leave-to {
+    transform: none;
+  }
+}
 </style>
 
 <style lang="scss" scoped>
@@ -142,6 +166,26 @@ function handleProfileChevronClick() {
 
   &-Header {
     z-index: $z-index-d;
+  }
+
+  &-SkipLink {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: $z-index-e;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-primary-border);
+    border-radius: $radius-md;
+    background: var(--color-background-soft);
+    color: var(--color-text);
+    text-decoration: none;
+    transform: translateY(-200%);
+
+    &:focus-visible {
+      transform: translateY(0);
+      outline: 2px solid var(--color-primary-border);
+      outline-offset: 2px;
+    }
   }
 
   &-Backdrop {

@@ -9,6 +9,7 @@ import AppTextarea from '@/components/common/AppTextarea.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import { getAlbum, getAlbumDetail } from '@/services/api/albums.api'
@@ -25,6 +26,7 @@ import {
   listNested,
   type SocialSummary
 } from '@/services/api/social.api'
+import { findResource } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 import type { AlbumRow } from '@/types/domain/album.type'
 import type { EntityRow } from '@/types/domain/common.type'
@@ -50,6 +52,14 @@ const actionErrorMessage = ref<string | null>(null)
 let activeRequestId = 0
 
 const albumId = computed(() => String(route.params.id ?? ''))
+const albumResource = computed(() => findResource('albums'))
+const albumMediaRelation = computed(
+  () => (albumResource.value?.relations ?? []).find((relation) => relation.key === 'media') ?? null
+)
+const canManageAlbumMedia = computed(() => auth.isStaff || auth.isAdmin)
+const visibleRelationSections = computed(() =>
+  relationSections.value.filter((section) => section.key !== 'media')
+)
 const coverUrl = computed(() => {
   const media = relationSections.value.find((section) => section.key === 'media')?.items?.[0]
   return media ? mediaThumbnailUrl(media) : MEDIA_FALLBACK_LOGO_URL
@@ -247,7 +257,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="AlbumDetailView">
+  <section class="AlbumDetailView">
     <RouterLink :to="{ name: 'album-list' }">Voltar para álbuns</RouterLink>
 
     <h1>{{ item?.title ?? 'Álbum' }}</h1>
@@ -324,7 +334,11 @@ watchEffect((onCleanup) => {
       <RouterLink v-else to="/login">Entre para comentar</RouterLink>
     </section>
 
-    <section v-for="section in relationSections" :key="section.key" class="AlbumDetailView-Section">
+    <section
+      v-for="section in visibleRelationSections"
+      :key="section.key"
+      class="AlbumDetailView-Section"
+    >
       <h2>{{ section.label }}</h2>
       <StatusMessage v-if="section.error" state="error" :message="section.error" />
       <CommentSection
@@ -358,7 +372,15 @@ watchEffect((onCleanup) => {
         </article>
       </template>
     </section>
-  </main>
+
+    <RelationManager
+      v-if="albumResource && albumMediaRelation"
+      :relation="albumMediaRelation"
+      :parent-resource="albumResource"
+      :parent-id="albumId"
+      :can-manage="canManageAlbumMedia"
+    />
+  </section>
 </template>
 
 <style scoped lang="scss">

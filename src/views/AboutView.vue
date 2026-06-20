@@ -14,7 +14,7 @@ const links: AboutLink[] = [
 </script>
 
 <template>
-  <main class="AboutView">
+  <section class="AboutView">
     <h1 class="AboutView-Title">InfoTrem</h1>
     <p class="AboutView-Text">
       O InfoTrem e um aplicativo colaborativo de informacoes e midias sobre as ferrovias
@@ -29,7 +29,7 @@ const links: AboutLink[] = [
         {{ link.label }}
       </RouterLink>
     </nav>
-  </main>
+  </section>
 </template>
 
 <style lang="scss" scoped>

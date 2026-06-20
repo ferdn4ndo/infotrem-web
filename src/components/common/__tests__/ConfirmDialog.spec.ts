@@ -48,11 +48,24 @@ describe('ConfirmDialog', () => {
     await nextTick()
 
     expect(trigger.attributes('inert')).toBeDefined()
+    const dialog = wrapper.get('.ConfirmDialog')
+    expect(dialog.attributes('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(
+      wrapper.getComponent(ConfirmDialog).findAll('button')[0].element
+    )
 
     await wrapper.getComponent(ConfirmDialog).findAll('button')[0].trigger('click')
     await nextTick()
 
     expect(trigger.attributes('inert')).toBeUndefined()
     expect(document.activeElement).toBe(trigger.element)
+  })
+
+  it('keeps overlay focusable for fallback focus trap', () => {
+    const wrapper = mount(ConfirmDialog, {
+      props: { modelValue: true }
+    })
+
+    expect(wrapper.get('.ConfirmDialog-Overlay').attributes('tabindex')).toBe('-1')
   })
 })

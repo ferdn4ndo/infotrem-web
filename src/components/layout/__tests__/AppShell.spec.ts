@@ -82,4 +82,14 @@ describe('App shell drawer behavior', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-cy="side-menu"]').exists()).toBe(false)
   })
+
+  it('renders skip link and single shell main landmark', async () => {
+    const { wrapper, router } = mountApp()
+    await router.isReady()
+
+    const skipLink = wrapper.get('a[href="#main-content"]')
+    expect(skipLink.text()).toContain('Pular para o conteúdo')
+    expect(wrapper.findAll('main')).toHaveLength(1)
+    expect(wrapper.get('main').attributes('id')).toBe('main-content')
+  })
 })

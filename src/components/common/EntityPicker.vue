@@ -41,6 +41,7 @@ const resolvedEntityType = computed(
     props.entityType ??
     allResources.find((resource) => resource.path === props.resourcePath)?.entityType
 )
+const listboxId = `entity-picker-list-${Math.random().toString(16).slice(2)}`
 
 const query = ref('')
 const candidates = ref<EntityRow[]>([])
@@ -225,6 +226,10 @@ onBeforeUnmount(() => {
         v-model="query"
         class="EntityPicker-Input"
         type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        :aria-expanded="openSuggestions && candidates.length > 0"
+        :aria-controls="listboxId"
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required && !modelValue"
@@ -235,6 +240,7 @@ onBeforeUnmount(() => {
         type="button"
         class="EntityPicker-Clear"
         :disabled="disabled"
+        aria-label="Limpar seleção"
         @click="clearSelection"
       >
         Limpar
@@ -247,11 +253,18 @@ onBeforeUnmount(() => {
     <p v-if="isLoading" class="EntityPicker-State">Buscando registros...</p>
     <p v-if="errorMessage" class="EntityPicker-Error" role="alert">{{ errorMessage }}</p>
 
-    <ul v-if="openSuggestions && candidates.length > 0" class="EntityPicker-List" role="listbox">
+    <ul
+      v-if="openSuggestions && candidates.length > 0"
+      :id="listboxId"
+      class="EntityPicker-List"
+      role="listbox"
+    >
       <li
         v-for="candidate in candidates"
         :key="String(candidate.id ?? entityLabel(candidate))"
         class="EntityPicker-Option"
+        role="option"
+        :aria-selected="rowId(candidate) === modelValue"
       >
         <button
           type="button"

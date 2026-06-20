@@ -42,7 +42,7 @@ async function sendContact() {
 </script>
 
 <template>
-  <main class="ContactView">
+  <section class="ContactView">
     <h1>Contato</h1>
     <p>
       Envie dúvidas, correções ou solicitações para a equipe InfoTrem. Sua conta autenticada será
@@ -78,7 +78,7 @@ async function sendContact() {
         <AppButton type="submit" data-cy="contact-submit" :disabled="isLoading">Enviar</AppButton>
       </form>
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

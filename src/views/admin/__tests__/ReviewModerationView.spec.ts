@@ -69,6 +69,11 @@ describe('ReviewModerationView', () => {
     })
     await flushPromises()
 
+    expect(mocks.listResource).toHaveBeenCalledWith(
+      '/media-reviews',
+      expect.any(Object),
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
     expect(wrapper.text()).toContain('Mídia:')
     expect(wrapper.text()).toContain('#media-1')
     expect(wrapper.text()).toContain('Aprovar')

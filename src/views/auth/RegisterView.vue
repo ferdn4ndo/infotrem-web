@@ -36,7 +36,7 @@ async function submitRegister() {
 </script>
 
 <template>
-  <main class="AuthView">
+  <section class="AuthView">
     <h1>Criar conta</h1>
     <AppCard>
       <form class="AuthView-Form" @submit.prevent="submitRegister">
@@ -95,7 +95,7 @@ async function submitRegister() {
         <StatusMessage v-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
       </form>
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

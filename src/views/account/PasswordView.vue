@@ -34,7 +34,7 @@ async function submitPasswordChange() {
 </script>
 
 <template>
-  <main class="PasswordView">
+  <section class="PasswordView">
     <h1>Alterar senha</h1>
     <AppCard>
       <form class="PasswordView-Form" @submit.prevent="submitPasswordChange">
@@ -71,7 +71,7 @@ async function submitPasswordChange() {
         <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
       </form>
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

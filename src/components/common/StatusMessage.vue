@@ -58,7 +58,7 @@ const emit = defineEmits<{
 
   &--error {
     background-color: var(--color-background-soft);
-    border: 1px solid #b30024;
+    border: 1px solid var(--color-danger-border);
   }
 
   &-Text {

@@ -8,6 +8,7 @@ import AppInput from '@/components/common/AppInput.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
 import AppTextarea from '@/components/common/AppTextarea.vue'
 import EntityPicker from '@/components/common/EntityPicker.vue'
+import { reviewDecisions } from '@/services/api/review-decisions'
 import { allResources, type ResourceConfig } from '@/services/api/resources'
 import { createResource, updateResource } from '@/services/api/resources.api'
 import type { EntityRow } from '@/types/domain/common.type'
@@ -72,12 +73,7 @@ const enumOptions: Record<string, { value: string; label: string }[]> = {
     { value: 'audio', label: 'Áudio' },
     { value: 'other', label: 'Outro' }
   ],
-  decision: [
-    { value: '', label: 'Selecione' },
-    { value: 'approved', label: 'Aprovar' },
-    { value: 'rejected', label: 'Rejeitar' },
-    { value: 'pending', label: 'Pendente' }
-  ],
+  decision: [{ value: '', label: 'Selecione' }, ...reviewDecisions],
   value: [
     { value: '', label: 'Selecione' },
     { value: '1', label: 'Concordo' },

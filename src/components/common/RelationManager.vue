@@ -21,9 +21,15 @@ type RelationManagerProps = {
   parentResource: ResourceConfig
   parentId: string
   parentPathOverride?: string
+  canManage?: boolean | null
+  ownerId?: string | null
 }
 
-const props = defineProps<RelationManagerProps>()
+const props = withDefaults(defineProps<RelationManagerProps>(), {
+  parentPathOverride: undefined,
+  canManage: null,
+  ownerId: undefined
+})
 const auth = useAuthStore()
 const route = useRoute()
 
@@ -59,21 +65,41 @@ const writable = computed(
     props.relation.kind !== 'readonly' &&
     (props.relation.kind === 'owned-toggle' || Boolean(props.relation.writeFields))
 )
-const canAdd = computed(() => writable.value && canCreate(relationAsResource.value, auth))
-const canModify = computed(() => writable.value && canEdit(relationAsResource.value, auth))
-const canRemove = computed(() => writable.value && canDelete(relationAsResource.value, auth))
+const currentUserId = computed(() => String(auth.user?.id ?? ''))
+const isOwner = computed(() =>
+  props.ownerId === undefined || props.ownerId === null
+    ? false
+    : currentUserId.value !== '' && currentUserId.value === String(props.ownerId)
+)
+const canManageByOverride = computed(() => {
+  if (props.canManage !== null) {
+    return props.canManage
+  }
+  if (props.ownerId === undefined) {
+    return true
+  }
+  return isOwner.value || auth.isStaff || auth.isAdmin
+})
+const canAdd = computed(
+  () => writable.value && canManageByOverride.value && canCreate(relationAsResource.value, auth)
+)
+const canModify = computed(
+  () => writable.value && canManageByOverride.value && canEdit(relationAsResource.value, auth)
+)
+const canRemove = computed(
+  () => writable.value && canManageByOverride.value && canDelete(relationAsResource.value, auth)
+)
 const isOwnedToggle = computed(() => props.relation.kind === 'owned-toggle')
 
 const currentUserRow = computed(() => {
-  const currentUserId = String(auth.user?.id ?? '')
-  if (!currentUserId) {
+  if (!currentUserId.value) {
     return null
   }
 
   return (
     rows.value.find((row) =>
       ['user_id', 'liked_by_id', 'favorited_by_id', 'created_by_id', 'owner_id'].some(
-        (field) => String(row[field] ?? '') === currentUserId
+        (field) => String(row[field] ?? '') === currentUserId.value
       )
     ) ?? null
   )

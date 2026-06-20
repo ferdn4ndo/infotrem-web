@@ -134,7 +134,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="RollingStockDetailView">
+  <section class="RollingStockDetailView">
     <RouterLink to="/rolling-stock">Voltar para material rodante</RouterLink>
 
     <h1>
@@ -174,7 +174,7 @@ watchEffect((onCleanup) => {
         :parent-id="rollingStockId"
       />
     </template>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

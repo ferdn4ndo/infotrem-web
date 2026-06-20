@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
@@ -89,16 +91,22 @@ function labelFor(item: SearchApi.SearchResultItem) {
 </script>
 
 <template>
-  <main class="SearchView">
+  <section class="SearchView">
     <h1>Busca</h1>
 
     <form class="SearchView-Form" data-cy="search-form" @submit.prevent="submitSearch">
-      <input
-        v-model="query"
-        class="SearchView-Input"
-        data-cy="search-input"
-        placeholder="Busque por locais, material rodante, mídia..."
-      />
+      <AppField class="SearchView-InputField" label="Busca">
+        <template #default="{ id }">
+          <AppInput
+            :id="id"
+            v-model="query"
+            class="SearchView-Input"
+            data-cy="search-input"
+            placeholder="Busque por locais, material rodante, mídia..."
+            type="search"
+          />
+        </template>
+      </AppField>
       <AppButton class="SearchView-Button" data-cy="search-submit" type="submit">Buscar</AppButton>
     </form>
 
@@ -126,7 +134,7 @@ function labelFor(item: SearchApi.SearchResultItem) {
         </AppCard>
       </section>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">
@@ -139,13 +147,17 @@ function labelFor(item: SearchApi.SearchResultItem) {
   &-Form {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-end;
     gap: var(--space-2);
     margin-bottom: var(--space-5);
   }
 
-  &-Input {
+  &-InputField {
     flex: 1 1 auto;
-    padding: var(--space-2) var(--space-3);
+  }
+
+  &-Input {
+    min-width: 240px;
   }
 
   &-Button {

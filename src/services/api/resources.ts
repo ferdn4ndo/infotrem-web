@@ -85,9 +85,9 @@ export const publicResources: ResourceConfig[] = [
         label: 'Álbuns',
         pathSuffix: 'albums',
         parentParam: 'media_id',
-        access: 'staff',
+        access: 'public',
         primaryFields: ['album_id', 'media_id', 'id'],
-        writeFields: ['album_id']
+        kind: 'readonly'
       },
       {
         key: 'reviews',
@@ -317,9 +317,9 @@ export const domainResources: ResourceConfig[] = [
         label: 'Locais',
         pathSuffix: 'locations',
         parentParam: 'path_id',
-        access: 'staff',
+        access: 'public',
         primaryFields: ['location_id', 'path_id', 'id'],
-        writeFields: ['location_id']
+        kind: 'readonly'
       },
       {
         key: 'points',
@@ -499,7 +499,18 @@ export const domainResources: ResourceConfig[] = [
     entityType: 'track_gauge',
     access: 'public',
     primaryFields: ['code', 'size'],
-    writeFields: ['code', 'size']
+    writeFields: ['code', 'size'],
+    relations: [
+      {
+        key: 'locations',
+        label: 'Locais',
+        pathSuffix: 'locations',
+        parentParam: 'gauge_id',
+        access: 'public',
+        primaryFields: ['location_id', 'gauge_id', 'id'],
+        kind: 'readonly'
+      }
+    ]
   },
   {
     key: 'paint-schemes',
@@ -585,7 +596,18 @@ export const adminResources: ResourceConfig[] = [
     path: '/locomotive-designs',
     entityType: 'locomotive_design',
     access: 'staff',
-    primaryFields: ['name', 'manufacturer_id']
+    primaryFields: ['name', 'manufacturer_id'],
+    relations: [
+      {
+        key: 'gauges',
+        label: 'Bitolas',
+        pathSuffix: 'gauges',
+        parentParam: 'locomotive_design_id',
+        access: 'staff',
+        primaryFields: ['gauge_id', 'locomotive_design_id', 'id'],
+        writeFields: ['gauge_id']
+      }
+    ]
   },
   {
     key: 'passenger-car-types',

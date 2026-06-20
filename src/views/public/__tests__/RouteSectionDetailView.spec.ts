@@ -68,6 +68,8 @@ describe('RouteSectionDetailView', () => {
     expect(wrapper.text()).toContain('Seção da rota')
     expect(wrapper.text()).toContain('Trecho A')
     expect(wrapper.findAll('[data-test="relation-manager"]').length).toBeGreaterThan(0)
+    const relationCalls = mocks.listNested.mock.calls.map(([, relation]) => relation)
+    expect(relationCalls).not.toContain('points')
   })
 
   it('hides nested write managers for non-staff users', async () => {

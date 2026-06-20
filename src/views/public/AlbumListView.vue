@@ -103,7 +103,7 @@ function handleOffsetChange(nextOffset: number) {
 </script>
 
 <template>
-  <main class="AlbumListView">
+  <section class="AlbumListView">
     <h1>Álbuns</h1>
 
     <StatusMessage v-if="isLoading" state="loading" message="Carregando álbuns..." />
@@ -146,7 +146,7 @@ function handleOffsetChange(nextOffset: number) {
       :count="count"
       @update:offset="handleOffsetChange"
     />
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

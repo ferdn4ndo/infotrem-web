@@ -49,8 +49,14 @@ describe('MediaDetailView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.auth.isLoggedIn = true
+    mocks.auth.isStaff = false
     mocks.getMediaDetail.mockResolvedValue({
-      media: { id: 'media-1', title: 'Mídia de teste', location_id: 'location-1' },
+      media: {
+        id: 'media-1',
+        title: 'Mídia de teste',
+        location_id: 'location-1',
+        created_by_id: 'owner-1'
+      },
       social_summary: { likes_count: 1, favorites_count: 0, liked: false, favorited: false },
       comments: [],
       reviews: []
@@ -72,7 +78,12 @@ describe('MediaDetailView', () => {
     const wrapper = mount(MediaDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -97,7 +108,12 @@ describe('MediaDetailView', () => {
     const wrapper = mount(MediaDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -114,7 +130,12 @@ describe('MediaDetailView', () => {
     const wrapper = mount(MediaDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -127,7 +148,12 @@ describe('MediaDetailView', () => {
     const wrapper = mount(MediaDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -136,5 +162,47 @@ describe('MediaDetailView', () => {
     await wrapper.get('[data-cy="media-like"]').trigger('click')
 
     expect(mocks.createNested).toHaveBeenCalledWith('/media/media-1', 'likes')
+  })
+
+  it('gates media review writes to owner-or-staff', async () => {
+    mocks.auth.user.id = 'viewer-1'
+
+    const wrapper = mount(MediaDetailView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-cy="relation-reviews"]').text()).toContain('manage=false')
+    expect(wrapper.get('[data-cy="relation-albums"]').text()).toContain('manage=false')
+  })
+
+  it('allows media owner to manage protected relations', async () => {
+    mocks.auth.user.id = 'owner-1'
+
+    const wrapper = mount(MediaDetailView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-cy="relation-images"]').text()).toContain('manage=true')
+    expect(wrapper.get('[data-cy="relation-reviews"]').text()).toContain('manage=true')
   })
 })

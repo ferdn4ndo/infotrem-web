@@ -158,7 +158,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="LocationDetailView">
+  <section class="LocationDetailView">
     <RouterLink to="/locations">Voltar para locais</RouterLink>
 
     <h1>{{ item?.name ?? 'Local' }}</h1>
@@ -179,6 +179,7 @@ onUnmounted(() => {
         <div
           ref="mapContainer"
           class="LocationDetailView-MapContainer"
+          role="region"
           aria-label="Mapa com posição do local"
         />
       </AppCard>
@@ -213,7 +214,7 @@ onUnmounted(() => {
         :parent-id="locationId"
       />
     </template>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

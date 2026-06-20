@@ -21,6 +21,7 @@ const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
 const actionErrorMessage = ref<string | null>(null)
 let activeRequestId = 0
+let activeLoadController: AbortController | null = null
 
 function stringField(row: EntityRow, ...fields: string[]) {
   for (const field of fields) {
@@ -34,27 +35,34 @@ function stringField(row: EntityRow, ...fields: string[]) {
 
 async function loadReviews() {
   const requestId = ++activeRequestId
+  activeLoadController?.abort()
+  activeLoadController = new AbortController()
+  const controller = activeLoadController
   isLoading.value = true
   errorMessage.value = null
 
   try {
-    const response = await listResource('/media-reviews', {
-      limit: pageLimit,
-      offset: offset.value
-    })
-    if (requestId !== activeRequestId) {
+    const response = await listResource(
+      '/media-reviews',
+      {
+        limit: pageLimit,
+        offset: offset.value
+      },
+      { signal: controller.signal }
+    )
+    if (controller.signal.aborted || requestId !== activeRequestId) {
       return
     }
     rows.value = response.items
     totalCount.value = response.count
   } catch (error) {
-    if (requestId !== activeRequestId) {
+    if (controller.signal.aborted || requestId !== activeRequestId) {
       return
     }
     errorMessage.value =
       error instanceof Error ? error.message : 'Não foi possível carregar a fila de moderação.'
   } finally {
-    if (requestId === activeRequestId) {
+    if (!controller.signal.aborted && requestId === activeRequestId) {
       isLoading.value = false
     }
   }
@@ -81,13 +89,16 @@ async function decideReview(row: EntityRow, decision: ReviewDecision) {
   }
 }
 
-watchEffect(() => {
+watchEffect((onCleanup) => {
   void loadReviews()
+  onCleanup(() => {
+    activeLoadController?.abort()
+  })
 })
 </script>
 
 <template>
-  <main class="ReviewModerationView">
+  <section class="ReviewModerationView">
     <h1>Moderação de avaliações</h1>
     <p>Fila global de avaliações para revisão da equipe.</p>
 
@@ -165,7 +176,7 @@ watchEffect(() => {
       :offset="offset"
       @update:offset="offset = $event"
     />
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

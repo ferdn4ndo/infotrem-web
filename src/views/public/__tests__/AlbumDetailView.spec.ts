@@ -49,6 +49,7 @@ describe('AlbumDetailView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.auth.isLoggedIn = true
+    mocks.auth.isStaff = false
     mocks.getAlbumDetail.mockResolvedValue({
       album: { id: 'album-1', title: 'Álbum de teste' },
       social_summary: { likes_count: 2, favorites_count: 1, liked: false, favorited: false },
@@ -72,7 +73,12 @@ describe('AlbumDetailView', () => {
     const wrapper = mount(AlbumDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -97,7 +103,12 @@ describe('AlbumDetailView', () => {
     const wrapper = mount(AlbumDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -114,7 +125,12 @@ describe('AlbumDetailView', () => {
     const wrapper = mount(AlbumDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -127,7 +143,12 @@ describe('AlbumDetailView', () => {
     const wrapper = mount(AlbumDetailView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' }
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
         }
       }
     })
@@ -136,5 +157,40 @@ describe('AlbumDetailView', () => {
     await wrapper.get('[data-cy="album-like"]').trigger('click')
 
     expect(mocks.createNested).toHaveBeenCalledWith('/albums/album-1', 'likes')
+  })
+
+  it('gates album media membership management to staff', async () => {
+    const wrapper = mount(AlbumDetailView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-cy="relation-media"]').text()).toContain('manage=false')
+
+    mocks.auth.isStaff = true
+    const staffWrapper = mount(AlbumDetailView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RelationManager: {
+            props: ['relation', 'canManage'],
+            template:
+              '<div :data-cy="`relation-${relation.key}`">manage={{ String(canManage) }}</div>'
+          }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(staffWrapper.get('[data-cy="relation-media"]').text()).toContain('manage=true')
   })
 })

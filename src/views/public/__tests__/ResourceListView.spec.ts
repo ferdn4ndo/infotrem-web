@@ -69,6 +69,10 @@ describe('ResourceListView', () => {
 
     expect(wrapper.text()).toContain('Mídia')
     expect(wrapper.text()).toContain('1 registro(s)')
+    const searchInput = wrapper.get('input[type="search"]')
+    const searchId = searchInput.attributes('id')
+    expect(searchId).toBeTruthy()
+    expect(wrapper.get(`label[for="${searchId}"]`).text()).toContain('Filtrar')
   })
 
   it('shows error state when list call fails', async () => {

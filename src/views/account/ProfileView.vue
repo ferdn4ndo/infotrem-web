@@ -3,6 +3,9 @@ import { onMounted, ref, watch } from 'vue'
 
 import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import AppSelect from '@/components/common/AppSelect.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
@@ -104,9 +107,9 @@ async function loadCitiesForState(stateId: string) {
     const response = await listNested(`/states/${stateId}`, 'cities')
     cities.value = response.items
   } catch (error) {
-    console.warn('[ProfileView] Failed to load /states/:id/cities; falling back to /cities.', error)
-    const response = await listResource('/cities', { limit: 1000 })
-    cities.value = response.items.filter((city) => String(city.state_id ?? '') === stateId)
+    cities.value = []
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível carregar as cidades do estado.'
   }
 }
 
@@ -177,7 +180,7 @@ watch(
 </script>
 
 <template>
-  <main class="ProfileView">
+  <section class="ProfileView">
     <h1>Meu Perfil</h1>
     <StatusMessage v-if="auth.isLoading" state="loading" message="Carregando perfil..." />
     <StatusMessage v-else-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
@@ -198,34 +201,37 @@ watch(
     />
 
     <form v-if="auth.user" class="ProfileView-Form" @submit.prevent="saveProfile">
-      <label v-for="field in profileFields" :key="field">
-        {{ profileFieldLabel(field) }}
-        <input v-model="form[field]" />
-      </label>
-      <label>
-        Estado
-        <select v-model="form.state_id">
-          <option value="">Selecione um estado</option>
-          <option v-for="state in states" :key="String(state.id)" :value="String(state.id)">
-            {{ stateLabel(state) }}
-          </option>
-        </select>
-      </label>
-      <label>
-        Cidade
-        <select v-model="form.city_id" :disabled="!form.state_id">
-          <option value="">Selecione uma cidade</option>
-          <option v-for="city in cities" :key="String(city.id)" :value="String(city.id)">
-            {{ cityLabel(city) }}
-          </option>
-        </select>
-      </label>
+      <AppField v-for="field in profileFields" :key="field" :label="profileFieldLabel(field)">
+        <template #default="{ id }">
+          <AppInput :id="id" v-model="form[field]" />
+        </template>
+      </AppField>
+      <AppField label="Estado">
+        <template #default="{ id }">
+          <AppSelect :id="id" v-model="form.state_id">
+            <option value="">Selecione um estado</option>
+            <option v-for="state in states" :key="String(state.id)" :value="String(state.id)">
+              {{ stateLabel(state) }}
+            </option>
+          </AppSelect>
+        </template>
+      </AppField>
+      <AppField label="Cidade">
+        <template #default="{ id }">
+          <AppSelect :id="id" v-model="form.city_id" :disabled="!form.state_id">
+            <option value="">Selecione uma cidade</option>
+            <option v-for="city in cities" :key="String(city.id)" :value="String(city.id)">
+              {{ cityLabel(city) }}
+            </option>
+          </AppSelect>
+        </template>
+      </AppField>
       <AppButton type="submit" :disabled="auth.isLoading">Salvar perfil</AppButton>
       <AppButton type="button" :disabled="auth.isLoading" @click="resendEmailValidation">
         Reenviar validação de e-mail
       </AppButton>
     </form>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

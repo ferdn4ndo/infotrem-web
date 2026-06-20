@@ -25,12 +25,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="EmailValidationView">
+  <section class="EmailValidationView">
     <h1>Validação de e-mail</h1>
     <AppCard>
       <StatusMessage :state="hasError ? 'error' : 'empty'" :message="message" />
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

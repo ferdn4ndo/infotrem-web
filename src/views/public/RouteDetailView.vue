@@ -79,7 +79,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="RouteDetailView">
+  <section class="RouteDetailView">
     <RouterLink to="/routes">Voltar para rotas</RouterLink>
 
     <h1>{{ routeItem?.name ?? 'Rota' }}</h1>
@@ -110,7 +110,7 @@ watchEffect((onCleanup) => {
         :parent-id="routeId"
       />
     </template>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

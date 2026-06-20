@@ -5,12 +5,11 @@ import { RouterLink, useRoute } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppField from '@/components/common/AppField.vue'
-import AppSelect from '@/components/common/AppSelect.vue'
 import AppTextarea from '@/components/common/AppTextarea.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
-import ReviewSection from '@/components/common/ReviewSection.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import {
@@ -31,7 +30,7 @@ import {
   getSocialSummary,
   type SocialSummary
 } from '@/services/api/social.api'
-import { reviewDecisions, type ReviewDecision } from '@/services/api/review-decisions'
+import { findResource, type RelationConfig } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
 import type { MediaRow } from '@/types/domain/media.type'
@@ -50,8 +49,6 @@ const item = ref<MediaRow | null>(null)
 const socialSummary = ref<SocialSummary | null>(null)
 const relationSections = ref<RelationSection[]>([])
 const commentText = ref('')
-const reviewDecision = ref<ReviewDecision>('approve')
-const reviewComment = ref('')
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
@@ -63,6 +60,34 @@ const mediaId = computed(() => String(route.params.id ?? ''))
 const storageId = computed(() => stringField(item.value, 'filemgr_storage_id'))
 const fileId = computed(() => stringField(item.value, 'filemgr_file_id'))
 const canDownload = computed(() => Boolean(storageId.value && fileId.value))
+const mediaResource = computed(() => findResource('media'))
+const mediaOwnerId = computed(() => stringField(item.value, 'created_by_id'))
+const canManageOwnedMediaWrites = computed(() => {
+  const currentUserId = String(auth.user?.id ?? '')
+  if (!currentUserId) {
+    return false
+  }
+  return (
+    auth.isStaff ||
+    auth.isAdmin ||
+    (mediaOwnerId.value !== null && mediaOwnerId.value === currentUserId)
+  )
+})
+const relationByKey = computed<Record<string, RelationConfig>>(() =>
+  Object.fromEntries(
+    (mediaResource.value?.relations ?? []).map((relation) => [relation.key, relation])
+  )
+)
+const managedAssetRelations = computed(() =>
+  ['images', 'videos', 'documents']
+    .map((key) => relationByKey.value[key])
+    .filter((relation): relation is RelationConfig => Boolean(relation))
+)
+const mediaReviewsRelation = computed(() => relationByKey.value.reviews ?? null)
+const mediaAlbumsRelation = computed(() => relationByKey.value.albums ?? null)
+const visibleRelationSections = computed(() =>
+  relationSections.value.filter((section) => !['albums', 'reviews'].includes(section.key))
+)
 const previewIsVideo = computed(() => (item.value ? isVideoMedia(item.value) : false))
 const previewUrl = computed(() => {
   if (!item.value) {
@@ -77,24 +102,13 @@ const previewUrl = computed(() => {
     )
   }
 
-  const imageRelations =
-    relationSections.value.find((section) => section.key === 'images')?.items ??
-    relationSections.value.find((section) => section.key === 'image-sizes')?.items ??
-    []
-  const imageCandidate = imageRelations[0]
-
-  return imageCandidate ? mediaPreviewUrl(imageCandidate) : mediaPreviewUrl(item.value)
+  return mediaPreviewUrl(item.value)
 })
 
 const relationConfigs = [
-  { key: 'images', detailKey: 'images', label: 'Imagens' },
   { key: 'image-sizes', detailKey: 'image_sizes', label: 'Tamanhos de imagem' },
-  { key: 'videos', detailKey: 'videos', label: 'Vídeos' },
-  { key: 'documents', detailKey: 'documents', label: 'Documentos' },
-  { key: 'albums', detailKey: 'albums', label: 'Álbuns' },
   { key: 'rolling-stock', detailKey: 'rolling_stock', label: 'Material rodante' },
-  { key: 'comments', detailKey: 'comments', label: 'Comentários' },
-  { key: 'reviews', detailKey: 'reviews', label: 'Avaliações' }
+  { key: 'comments', detailKey: 'comments', label: 'Comentários' }
 ]
 
 function stringField(row: EntityRow | null, field: string) {
@@ -248,13 +262,6 @@ async function refreshComments() {
   )
 }
 
-async function refreshReviews() {
-  const reviews = await loadRelation('reviews', 'Avaliações')
-  relationSections.value = relationSections.value.map((section) =>
-    section.key === 'reviews' ? reviews : section
-  )
-}
-
 async function createRelation(relation: 'favorites' | 'likes') {
   actionMessage.value = null
   actionErrorMessage.value = null
@@ -293,30 +300,6 @@ async function deleteRelation(relation: 'favorites' | 'likes') {
   } catch (error) {
     actionErrorMessage.value =
       error instanceof Error ? error.message : 'Não foi possível remover a ação.'
-  }
-}
-
-async function createReview() {
-  if (!reviewDecision.value.trim() && !reviewComment.value.trim()) {
-    actionErrorMessage.value = 'Preencha a decisão ou comentário da avaliação.'
-    return
-  }
-
-  actionMessage.value = null
-  actionErrorMessage.value = null
-
-  try {
-    await createNested(`/media/${mediaId.value}`, 'reviews', {
-      decision: reviewDecision.value,
-      comment: reviewComment.value.trim() || undefined
-    })
-    reviewDecision.value = 'approve'
-    reviewComment.value = ''
-    actionMessage.value = 'Avaliação registrada.'
-    await refreshReviews()
-  } catch (error) {
-    actionErrorMessage.value =
-      error instanceof Error ? error.message : 'Não foi possível registrar a avaliação.'
   }
 }
 
@@ -359,7 +342,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="MediaDetailView">
+  <section class="MediaDetailView">
     <RouterLink :to="{ name: 'media-list' }">Voltar para mídia</RouterLink>
 
     <h1>{{ item?.title ?? item?.name ?? 'Mídia' }}</h1>
@@ -466,50 +449,11 @@ watchEffect((onCleanup) => {
       <RouterLink v-else to="/login">Entre para comentar</RouterLink>
     </section>
 
-    <section v-if="item" class="MediaDetailView-Section">
-      <h2>Nova avaliação</h2>
-      <form v-if="auth.isLoggedIn" data-cy="media-review-form" @submit.prevent="createReview">
-        <AppField label="Decisão">
-          <template #default="{ id, required, disabled, ariaInvalid, ariaDescribedby }">
-            <AppSelect
-              v-model="reviewDecision"
-              :id="id"
-              :required="required"
-              :disabled="disabled"
-              :aria-invalid="ariaInvalid"
-              :aria-describedby="ariaDescribedby"
-              data-cy="media-review-decision"
-            >
-              <option
-                v-for="decision in reviewDecisions"
-                :key="decision.value"
-                :value="decision.value"
-              >
-                {{ decision.label }}
-              </option>
-            </AppSelect>
-          </template>
-        </AppField>
-        <AppField label="Comentário">
-          <template #default="{ id, required, disabled, ariaInvalid, ariaDescribedby }">
-            <AppTextarea
-              v-model="reviewComment"
-              :id="id"
-              :required="required"
-              :disabled="disabled"
-              :aria-invalid="ariaInvalid"
-              :aria-describedby="ariaDescribedby"
-              data-cy="media-review-comment"
-              placeholder="Observações da avaliação"
-            />
-          </template>
-        </AppField>
-        <AppButton type="submit" data-cy="media-review-submit">Registrar avaliação</AppButton>
-      </form>
-      <RouterLink v-else to="/login">Entre para avaliar</RouterLink>
-    </section>
-
-    <section v-for="section in relationSections" :key="section.key" class="MediaDetailView-Section">
+    <section
+      v-for="section in visibleRelationSections"
+      :key="section.key"
+      class="MediaDetailView-Section"
+    >
       <h2>{{ section.label }}</h2>
       <StatusMessage v-if="section.error" state="error" :message="section.error" />
       <CommentSection
@@ -517,12 +461,6 @@ watchEffect((onCleanup) => {
         :parent-path="`/media/${mediaId}`"
         :items="section.items"
         @refresh="refreshComments"
-      />
-      <ReviewSection
-        v-else-if="section.key === 'reviews'"
-        :parent-path="`/media/${mediaId}`"
-        :items="section.items"
-        @refresh="refreshReviews"
       />
       <EmptyState
         v-else-if="section.items.length === 0"
@@ -538,7 +476,36 @@ watchEffect((onCleanup) => {
         />
       </template>
     </section>
-  </main>
+
+    <template v-if="mediaResource">
+      <RelationManager
+        v-for="relation in managedAssetRelations"
+        :key="relation.key"
+        :relation="relation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :owner-id="mediaOwnerId"
+        :can-manage="canManageOwnedMediaWrites"
+      />
+
+      <RelationManager
+        v-if="mediaReviewsRelation"
+        :relation="mediaReviewsRelation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :owner-id="mediaOwnerId"
+        :can-manage="canManageOwnedMediaWrites"
+      />
+
+      <RelationManager
+        v-if="mediaAlbumsRelation"
+        :relation="mediaAlbumsRelation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :can-manage="false"
+      />
+    </template>
+  </section>
 </template>
 
 <style scoped lang="scss">

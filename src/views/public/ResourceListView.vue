@@ -4,6 +4,8 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
 import AppPagination from '@/components/common/AppPagination.vue'
 import ResourceForm from '@/components/common/ResourceForm.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
@@ -107,21 +109,32 @@ async function handleCreatedRecord(created: EntityRow) {
 </script>
 
 <template>
-  <main class="ResourceListView">
+  <section class="ResourceListView">
     <header class="ResourceListView-Header">
       <h1>{{ resource?.label ?? 'Recurso não encontrado' }}</h1>
       <AppButton v-if="canCreateItem" type="button" @click="isCreateOpen = true">Novo</AppButton>
     </header>
 
-    <label v-if="resource" class="ResourceListView-Search">
-      <span>Filtrar</span>
-      <input
-        :value="searchTerm"
-        type="search"
-        placeholder="Digite para filtrar"
-        @input="handleSearchInput(($event.target as HTMLInputElement).value)"
-      />
-    </label>
+    <AppField v-if="resource" class="ResourceListView-Search" label="Filtrar">
+      <template #default="{ id }">
+        <AppInput
+          :id="id"
+          :model-value="searchTerm"
+          type="search"
+          placeholder="Digite para filtrar"
+          @update:model-value="handleSearchInput"
+        />
+      </template>
+    </AppField>
+    <p
+      v-if="resource"
+      class="ResourceListView-SearchNote"
+      role="note"
+      aria-live="polite"
+      aria-label="Filtro aplicado apenas na página atual"
+    >
+      O filtro atua apenas nos registros já carregados desta página.
+    </p>
 
     <section v-if="isLoading" class="ResourceListView-Grid" aria-label="Carregando registros">
       <AppCard v-for="n in 3" :key="`resource-list-skeleton-${n}`">
@@ -176,7 +189,7 @@ async function handleCreatedRecord(created: EntityRow) {
         @cancel="isCreateOpen = false"
       />
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">
@@ -195,24 +208,13 @@ async function handleCreatedRecord(created: EntityRow) {
   }
 
   &-Search {
-    display: grid;
-    gap: var(--space-1);
     margin: var(--space-3) 0;
+  }
 
-    span {
-      font-size: var(--font-size-sm);
-      color: var(--color-heading);
-      font-weight: $font-weight-bold;
-    }
-
-    input {
-      min-height: 36px;
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: $radius-md;
-      background: var(--color-background-soft);
-      color: var(--color-text);
-    }
+  &-SearchNote {
+    margin: calc(var(--space-2) * -1) 0 var(--space-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
   }
 
   &-Grid {

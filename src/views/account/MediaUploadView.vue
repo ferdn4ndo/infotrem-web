@@ -2,7 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import AppSelect from '@/components/common/AppSelect.vue'
+import AppTextarea from '@/components/common/AppTextarea.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import * as MediaApi from '@/services/api/media.api'
@@ -15,7 +20,7 @@ const mediaForm = ref<MediaCreatePayload>({
   title: '',
   description: '',
   type: '',
-  status: 'DRAFT',
+  status: 'draft',
   original_url: '',
   references: '',
   location_id: ''
@@ -47,11 +52,17 @@ async function loadLocations() {
 }
 
 function compactMediaPayload(payload: MediaCreatePayload): MediaCreatePayload {
-  return Object.fromEntries(
+  const compacted = Object.fromEntries(
     Object.entries(payload).filter(
       ([, value]) => value !== undefined && value !== '' && value !== null
     )
   ) as MediaCreatePayload
+
+  if (compacted.status) {
+    compacted.status = compacted.status.toLocaleLowerCase('pt-BR')
+  }
+
+  return compacted
 }
 
 function onFileChange(event: Event) {
@@ -133,7 +144,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="MediaUploadView">
+  <section class="MediaUploadView">
     <h1>Enviar mídia</h1>
     <p>
       Crie o registro de mídia e depois anexe um arquivo ou URL ao FileMgr. O backend seleciona o
@@ -142,46 +153,64 @@ onMounted(() => {
 
     <section class="MediaUploadView-Form">
       <form data-cy="media-create-form" @submit.prevent="createMedia">
-        <label>
-          Título
-          <input v-model="mediaForm.title" data-cy="media-title" required />
-        </label>
-        <label>
-          Descrição
-          <textarea v-model="mediaForm.description" />
-        </label>
-        <label>
-          Status
-          <input v-model="mediaForm.status" />
-        </label>
-        <label>
-          Tipo
-          <input v-model="mediaForm.type" />
-        </label>
-        <label>
-          URL original
-          <input v-model="mediaForm.original_url" type="url" />
-        </label>
-        <label>
-          Referências
-          <input v-model="mediaForm.references" />
-        </label>
-        <label>
-          Local
-          <select v-model="mediaForm.location_id">
-            <option value="">Selecione um local</option>
-            <option
-              v-for="location in locations"
-              :key="String(location.id)"
-              :value="String(location.id)"
-            >
-              {{ locationLabel(location) }}
-            </option>
-          </select>
-        </label>
-        <button type="submit" data-cy="media-create-submit" :disabled="isCreating">
+        <AppField label="Título" required>
+          <template #default="{ id, required }">
+            <AppInput
+              :id="id"
+              v-model="mediaForm.title"
+              data-cy="media-title"
+              :required="required"
+            />
+          </template>
+        </AppField>
+        <AppField label="Descrição">
+          <template #default="{ id }">
+            <AppTextarea :id="id" v-model="mediaForm.description" />
+          </template>
+        </AppField>
+        <AppField label="Status">
+          <template #default="{ id }">
+            <AppSelect :id="id" v-model="mediaForm.status">
+              <option value="draft">Rascunho</option>
+              <option value="pending">Pendente</option>
+              <option value="approved">Aprovado</option>
+              <option value="published">Publicado</option>
+              <option value="rejected">Rejeitado</option>
+            </AppSelect>
+          </template>
+        </AppField>
+        <AppField label="Tipo">
+          <template #default="{ id }">
+            <AppInput :id="id" v-model="mediaForm.type" />
+          </template>
+        </AppField>
+        <AppField label="URL original">
+          <template #default="{ id }">
+            <AppInput :id="id" v-model="mediaForm.original_url" type="url" />
+          </template>
+        </AppField>
+        <AppField label="Referências">
+          <template #default="{ id }">
+            <AppInput :id="id" v-model="mediaForm.references" />
+          </template>
+        </AppField>
+        <AppField label="Local">
+          <template #default="{ id }">
+            <AppSelect :id="id" v-model="mediaForm.location_id">
+              <option value="">Selecione um local</option>
+              <option
+                v-for="location in locations"
+                :key="String(location.id)"
+                :value="String(location.id)"
+              >
+                {{ locationLabel(location) }}
+              </option>
+            </AppSelect>
+          </template>
+        </AppField>
+        <AppButton type="submit" data-cy="media-create-submit" :disabled="isCreating">
           Criar mídia
-        </button>
+        </AppButton>
       </form>
       <StatusMessage v-if="isLoadingLocations" state="loading" message="Carregando locais..." />
 
@@ -210,27 +239,29 @@ onMounted(() => {
       />
 
       <form data-cy="media-file-upload-form" @submit.prevent="uploadFile">
-        <label>
-          Arquivo
-          <input type="file" @change="onFileChange" />
-        </label>
-        <button type="submit" :disabled="!media || isUploading">Enviar arquivo</button>
+        <AppField label="Arquivo">
+          <template #default="{ id }">
+            <AppInput :id="id" type="file" @change="onFileChange" />
+          </template>
+        </AppField>
+        <AppButton type="submit" :disabled="!media || isUploading">Enviar arquivo</AppButton>
       </form>
 
       <form data-cy="media-url-upload-form" @submit.prevent="uploadUrl">
-        <label>
-          URL
-          <input v-model="sourceUrl" data-cy="media-source-url" type="url" />
-        </label>
-        <button type="submit" data-cy="media-url-submit" :disabled="!media || isUploading">
+        <AppField label="URL">
+          <template #default="{ id }">
+            <AppInput :id="id" v-model="sourceUrl" data-cy="media-source-url" type="url" />
+          </template>
+        </AppField>
+        <AppButton type="submit" data-cy="media-url-submit" :disabled="!media || isUploading">
           Enviar URL
-        </button>
+        </AppButton>
       </form>
 
       <StatusMessage v-if="message" state="empty" :message="message" />
       <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

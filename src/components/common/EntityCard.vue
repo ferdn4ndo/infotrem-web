@@ -50,19 +50,19 @@ function displayValue(value: unknown) {
 <style scoped lang="scss">
 .EntityCard {
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: $radius-md;
   background: var(--color-background-soft);
-  padding: 16px;
+  padding: var(--space-4);
 
   &-Title {
-    margin: 0 0 12px;
-    font-size: 18px;
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-lg);
   }
 
   &-Fields {
     display: grid;
     grid-template-columns: minmax(120px, 25%) 1fr;
-    gap: 6px 12px;
+    gap: var(--space-2) var(--space-3);
     margin: 0;
   }
 

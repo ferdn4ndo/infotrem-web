@@ -190,4 +190,40 @@ describe('RelationManager', () => {
     expect(mocks.createNested).toHaveBeenCalledWith('/media/media-1', 'likes')
     expect(mocks.deleteNested).not.toHaveBeenCalledWith('/media/media-1', 'likes', 'like-2')
   })
+
+  it('hides write controls when explicit manage guard denies access', async () => {
+    mocks.canCreate.mockReturnValue(true)
+    mocks.canEdit.mockReturnValue(true)
+    mocks.canDelete.mockReturnValue(true)
+    mocks.listNested.mockResolvedValue({ items: [{ id: 'row-1', name: 'Imagem' }], count: 1 })
+
+    const wrapper = mount(RelationManager, {
+      props: {
+        relation: {
+          key: 'images',
+          label: 'Imagens',
+          pathSuffix: 'images',
+          parentParam: 'media_id',
+          access: 'public',
+          primaryFields: ['id'],
+          writeFields: ['description']
+        },
+        parentResource: {
+          key: 'media',
+          label: 'Mídia',
+          path: '/media',
+          access: 'public',
+          primaryFields: ['title']
+        },
+        parentId: 'media-1',
+        canManage: false
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.find('[data-cy="relation-add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-cy="relation-edit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-cy="relation-delete"]').exists()).toBe(false)
+  })
 })

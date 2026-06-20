@@ -90,7 +90,8 @@ describe('LocationDetailView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Pátio A')
-    expect(wrapper.find('[aria-label="Mapa com posição do local"]').exists()).toBe(true)
+    const mapRegion = wrapper.get('[aria-label="Mapa com posição do local"]')
+    expect(mapRegion.attributes('role')).toBe('region')
   })
 
   it('shows loading state while summary is pending', () => {

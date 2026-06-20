@@ -355,7 +355,7 @@ async function handleDeleteMainRecord() {
 </script>
 
 <template>
-  <main class="ResourceDetailView">
+  <section class="ResourceDetailView">
     <h1>{{ resource?.label ?? 'Recurso não encontrado' }}</h1>
 
     <AppCard
@@ -503,7 +503,7 @@ async function handleDeleteMainRecord() {
       @confirm="handleDeleteMainRecord"
       @cancel="confirmMainDeleteOpen = false"
     />
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

@@ -63,11 +63,6 @@ const relationConfigs = [
     titleFields: ['location_route_order', 'location_id', 'id']
   },
   { key: 'paths', label: 'Linhas da seção', titleFields: ['path_id', 'id'] },
-  {
-    key: 'points',
-    label: 'Pontos de referência',
-    titleFields: ['order', 'latitude', 'longitude', 'id']
-  },
   { key: 'information', label: 'Informações', titleFields: ['title', 'content', 'id'] }
 ]
 
@@ -165,18 +160,12 @@ watchEffect((onCleanup) => {
           const treePaths = (
             Array.isArray(targetSection.paths) ? targetSection.paths : []
           ) as EntityRow[]
-          const treePoints = (
-            Array.isArray(targetSection.points) ? targetSection.points : []
-          ) as EntityRow[]
           relationSections.value = relationSections.value.map((section) => {
             if (section.key === 'locations' && treeLocations.length > 0) {
               return { ...section, items: treeLocations, error: null }
             }
             if (section.key === 'paths' && treePaths.length > 0) {
               return { ...section, items: treePaths, error: null }
-            }
-            if (section.key === 'points' && treePoints.length > 0) {
-              return { ...section, items: treePoints, error: null }
             }
             return section
           })
@@ -211,7 +200,7 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <main class="RouteSectionDetailView">
+  <section class="RouteSectionDetailView">
     <RouterLink :to="{ name: 'resource-detail', params: { resource: 'routes', id: routeId } }">
       Voltar para rota
     </RouterLink>
@@ -309,7 +298,7 @@ watchEffect((onCleanup) => {
         />
       </section>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

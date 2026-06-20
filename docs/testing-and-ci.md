@@ -2,7 +2,7 @@
 
 ## Unit Tests
 
-Unit tests use Vitest with the `jsdom` environment. The config is in `vitest.config.ts`, which merges the Vite config so tests share aliases and Vue plugin setup.
+Unit tests use Vitest with the `jsdom` environment. `vitest.config.ts` merges Vite config so aliases and Vue transforms match app runtime behavior.
 
 Run unit tests with:
 
@@ -10,11 +10,22 @@ Run unit tests with:
 yarn test
 ```
 
-The current unit test surface is still minimal and includes the starter `HelloWorld` component test.
+Current suite size is approximately:
+
+- 54 spec files
+- 164 tests
+
+Coverage is centered on shipped behavior, including:
+
+- common/form/layout components and accessibility behavior
+- route pages (public, account, auth, admin)
+- API service modules and API contract expectations
+- auth store + route-access/redirect guard logic
+- permissions gating utilities
 
 ## E2E Tests
 
-Cypress config lives in `cypress.config.ts`. E2E specs are under `cypress/e2e`, with support files under `cypress/support`.
+Cypress config lives in `cypress.config.ts`. Specs are under `cypress/e2e`, with shared setup in `cypress/support`.
 
 Run e2e tests against a dev server:
 
@@ -29,7 +40,7 @@ yarn build
 yarn test:e2e
 ```
 
-The Cypress base URL is `http://localhost:4173`.
+The Cypress base URL is `http://localhost:4173`. In this environment, headless Cypress execution is currently blocked by a missing system dependency (`libnspr4.so`). Specs are still maintained as TypeScript e2e coverage.
 
 ## Linting And Formatting
 
@@ -65,12 +76,14 @@ yarn lint
 yarn test
 ```
 
-CodeQL analysis is configured separately in `.github/workflows/codeql.yml` for JavaScript/TypeScript.
+CI currently runs lint + unit tests; it does not run Cypress e2e in this workflow.
+
+CodeQL analysis runs separately in `.github/workflows/codeql.yml` for JavaScript/TypeScript.
 
 ## Dependency Automation
 
 Dependabot is configured in `.github/dependabot.yml` for npm packages and GitHub Actions. It groups core frontend tooling separately from linting/formatting tools.
 
-## Current Verification Caveat
+## Verification Caveat
 
-The repo target is Node 26. Running tests on older local Node versions can produce dependency loader failures that are not representative of CI. Use Node 26 before treating local test failures as authoritative.
+The repo target is Node 26. Running checks on older local Node versions can produce dependency/runtime failures that are not representative of CI.

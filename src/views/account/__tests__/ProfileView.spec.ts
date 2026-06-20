@@ -103,4 +103,24 @@ describe('ProfileView lookup loaders', () => {
 
     expect(wrapper.text()).toContain('Falha estados')
   })
+
+  it('does not fallback to /cities when nested city lookup fails', async () => {
+    mocks.listResource.mockResolvedValue({ items: [{ id: 'state-1', name: 'SP' }], count: 1 })
+    mocks.listNested.mockRejectedValue(new Error('Falha cidades'))
+
+    const wrapper = mount(ProfileView, {
+      global: {
+        stubs: {
+          AppCard: { template: '<div><slot /></div>' },
+          EntityCard: { template: '<div />' },
+          EmptyState: { template: '<div />' },
+          StatusMessage: { props: ['message'], template: '<p>{{ message }}</p>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Falha cidades')
+    expect(mocks.listResource).not.toHaveBeenCalledWith('/cities', expect.anything())
+  })
 })

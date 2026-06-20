@@ -61,9 +61,9 @@ withDefaults(defineProps<AppButtonProps>(), {
   }
 
   &--danger {
-    background-color: #b30024;
-    border-color: #8f001d;
-    color: #fff;
+    background-color: var(--color-danger-normal);
+    border-color: var(--color-danger-border);
+    color: var(--color-heading);
   }
 }
 </style>

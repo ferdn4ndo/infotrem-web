@@ -171,7 +171,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="MapView">
+  <section class="MapView">
     <h1>Mapa</h1>
     <StatusMessage v-if="isLoading" state="loading" message="Carregando mapa..." />
     <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
@@ -212,7 +212,7 @@ onUnmounted(() => {
         <p v-else class="MapView-Coordinates">Coordenadas indisponíveis</p>
       </RoutableEntitySummaryCard>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

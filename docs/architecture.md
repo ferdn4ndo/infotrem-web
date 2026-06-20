@@ -2,52 +2,46 @@
 
 ## Overview
 
-InfoTrem Web is a client-side Vue application. The browser entry point is `index.html`, which loads `src/main.ts`. The app renders into `#app`, installs Pinia and Vue Router, registers FontAwesome, and imports global SCSS.
+InfoTrem Web is an API-backed Vue 3 + Vite + TypeScript SPA. `src/main.ts` initializes theme state, registers FontAwesome, installs Pinia and Vue Router, then mounts `src/App.vue`. The app shell provides the fixed header, responsive side menu, profile drawer, and a single routed `<main>` landmark.
 
-The app currently has no backend integration. Feed and menu data come from async mock services in `src/services`, which makes the UI behave like it is waiting on external data without adding network dependencies yet.
+## Source Layout
 
-## Runtime Flow
+- `src/views`: route pages split by area (`public`, `auth`, `account`, `admin`).
+- `src/components/common`: reusable UI and form primitives (`AppField`, `AppInput`, `AppTextarea`, `AppSelect`, `AppCheckbox`, `AppButton`, `EntityPicker`, `ConfirmDialog`, `StatusMessage`, `EmptyState`, `AppSkeleton`, `AppPagination`, `AppCard`, `AppSpinner`).
+- `src/components/layout`: application shell components (`TheHeader`, `SideMenu`, profile widgets).
+- `src/components/table`: table-specific presentation.
+- `src/services/http`: shared HTTP client and API error handling.
+- `src/services/api`: feature APIs, permissions gating, entity routing, and the metadata-driven resource registry.
+- `src/stores`: Pinia stores (`auth.store.ts` for token/session state).
+- `src/composables`: reusable composition helpers such as `useTheme`.
+- `src/router`: route map and access guards.
+- `src/styles`: global styles, design tokens, and SCSS variables.
 
-1. `src/main.ts` imports global styles and creates the Vue app.
-2. `prepareIconsLibrary()` registers all FontAwesome icons used by templates.
-3. Pinia and the router are installed.
-4. `src/App.vue` renders the fixed header, optional side menu, optional profile collapse card, and `RouterView`.
-5. Route components load page-specific components and data.
+## API And Auth Flow
 
-## Routes
+`src/services/http/api-client.ts` prefixes calls with `/api`, serializes query params, parses JSON/204 responses, and injects `Authorization: Token <token>` when available. `src/stores/auth.store.ts` persists the token in local storage, hydrates `/me`, exposes `isLoggedIn`/`isStaff`/`isAdmin`, and owns login/register/profile/logout actions.
 
-`src/router/index.ts` currently defines:
+## Resource Framework And Bespoke Pages
 
-- `/` rendering `HomeView.vue`
-- `/feed` rendering `FeedView.vue`
-- `/about` lazy-loading `AboutView.vue`
+The app uses a generic resource framework driven by `src/services/api/resources.ts`:
 
-`MediaView.vue` exists and currently mirrors `FeedView.vue`, but it is not wired into the router.
+- Resource metadata (`ResourceConfig` + `RelationConfig`) defines endpoint paths, fields, access scope, and relations.
+- Generic pages: `ResourceListView`, `ResourceDetailView`, and `AdminResourceView`.
+- Generic editing and nested management: `ResourceForm` and `RelationManager`.
+- Social and ownership relation modes are handled through relation kinds (`crud`, `owned-toggle`, `readonly`).
 
-## Source Areas
+Bespoke detail pages exist for richer domain behavior and aggregate endpoints, including `CompanyDetailView`, `LocationDetailView`, `RollingStockDetailView`, `RouteDetailView` + `RouteTree`, `MediaDetailView`, and `AlbumDetailView`. Additional feature views include `ReviewModerationView`, `MapView` (Leaflet), and `SearchView`.
 
-- `src/components/layout`: header, side menu, profile toolbar/collapse, and reusable card layout.
-- `src/components/input`: simple flat button and text input components.
-- `src/components/feed`: feed list and feed card presentation.
-- `src/components/table`: media metadata display.
-- `src/services`: async mock repositories for feed and menu data.
-- `src/types`: shared TypeScript shapes for feed media, menu items, menu lists, and users.
-- `src/styles`: global theme variables and shared SCSS tokens.
-- `src/plugins`: app-level plugin setup, currently FontAwesome.
+## Routing And Access Control
 
-## Styling
+`src/router/index.ts` defines public, auth/account, resource, and staff/admin routes. Route guards enforce `requiresAuth`, `requiresStaff`, and `requiresAdmin`, and also honor resource-level access for dynamic admin routes. Legacy domain paths (for example `/companies`) redirect to generic resource routes.
 
-Global styles are loaded from `src/styles/main.scss`. Color tokens are exposed as CSS custom properties from `src/styles/colors.scss` and switch for dark mode via `prefers-color-scheme`. Vite injects `src/styles/variables.scss` into SCSS blocks, so component styles can use variables such as `$breakpoint-large` without importing them.
+## Styling, Theming, And Accessibility
 
-Components mostly use scoped SCSS and a BEM-like class convention. Keep new component styles scoped unless the intent is clearly global.
+Global tokens come from `src/styles/colors.scss` and `src/styles/variables.scss`, with responsive constants mirrored in `src/styles/tokens.ts`. Dark mode is controlled by `useTheme` and `data-theme` overrides, with `prefers-color-scheme` fallback.
 
-## Data Boundaries
+Accessibility conventions in shipped components include labeled form primitives, skip link + single `<main>` landmark, keyboard/focus-safe confirm dialogs, combobox/listbox semantics in `EntityPicker`, and reduced-motion handling in global/app transitions.
 
-The app does not have a real API client yet. `feed.service.ts` and `menu.service.ts` should be treated as repository boundaries: keep component code calling services instead of importing mock data directly. This will make a later HTTP migration easier.
+## Testing Architecture
 
-## Known Gaps
-
-- `menu.service.ts` links one child menu item to `/inspire`, but that route does not exist.
-- Feed date display is still a placeholder in `FeedItem.vue`.
-- Starter Vue template components and tests remain in the repo.
-- `public/sw.js` is a self-destroying service worker and may be leftover generated output.
+Unit tests use Vitest + jsdom and cover components, views, stores, router guards, and API services. Cypress e2e specs are maintained under `cypress/e2e` for browser journeys. See [`testing-and-ci.md`](./testing-and-ci.md) for current test/CI execution details.

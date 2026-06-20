@@ -24,7 +24,7 @@ async function submitLogin() {
 </script>
 
 <template>
-  <main class="AuthView">
+  <section class="AuthView">
     <h1>Entrar</h1>
     <AppCard>
       <form class="AuthView-Form" data-cy="login-form" @submit.prevent="submitLogin">
@@ -49,7 +49,7 @@ async function submitLogin() {
         <StatusMessage v-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
       </form>
     </AppCard>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

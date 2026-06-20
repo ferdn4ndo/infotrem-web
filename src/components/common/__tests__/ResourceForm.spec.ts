@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
 import ResourceForm from '@/components/common/ResourceForm.vue'
+import { reviewDecisions } from '@/services/api/review-decisions'
 
 const mocks = vi.hoisted(() => ({
   createResource: vi.fn(),
@@ -96,5 +97,23 @@ describe('ResourceForm', () => {
     expect(mocks.createResource).toHaveBeenCalledWith('/companies/company-1/paint-schemes', {
       name: 'Azul'
     })
+  })
+
+  it('uses review decision values from API contract', () => {
+    const wrapper = mount(ResourceForm, {
+      props: {
+        resource: {
+          key: 'media-reviews',
+          label: 'Avaliações',
+          path: '/media-reviews',
+          access: 'staff',
+          primaryFields: ['id'],
+          writeFields: ['decision']
+        }
+      }
+    })
+
+    const options = wrapper.findAll('option').map((option) => option.element.getAttribute('value'))
+    expect(options).toEqual(['', ...reviewDecisions.map((decision) => decision.value)])
   })
 })

@@ -43,6 +43,13 @@ describe('EntityPicker', () => {
     await vi.advanceTimersByTimeAsync(300)
     await flushPromises()
 
+    const input = wrapper.get('input')
+    expect(input.attributes('role')).toBe('combobox')
+    expect(input.attributes('aria-controls')).toBeTruthy()
+    expect(input.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.find('[role="listbox"]').exists()).toBe(true)
+    expect(wrapper.get('[role="option"]').attributes('aria-selected')).toBe('false')
+
     expect(mocks.search).toHaveBeenCalledWith(
       'rumo',
       20,
@@ -68,5 +75,17 @@ describe('EntityPicker', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
     expect(wrapper.text()).toContain('Selecionado: Rumo')
+  })
+
+  it('labels clear action for assistive technologies', async () => {
+    const wrapper = mount(EntityPicker, {
+      props: {
+        modelValue: 'company-1',
+        resourcePath: '/companies'
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.get('.EntityPicker-Clear').attributes('aria-label')).toBe('Limpar seleção')
   })
 })

@@ -31,7 +31,7 @@ onMounted(loadHealth)
 </script>
 
 <template>
-  <main class="OperationsView">
+  <section class="OperationsView">
     <h1>Operações</h1>
     <p>
       Superfície administrativa para endpoints operacionais seguros expostos pelo backend. Rotinas
@@ -66,7 +66,7 @@ onMounted(loadHealth)
         {{ link.label }}
       </a>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

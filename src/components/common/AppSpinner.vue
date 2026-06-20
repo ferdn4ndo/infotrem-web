@@ -45,4 +45,10 @@ withDefaults(defineProps<AppSpinnerProps>(), {
     transform: rotate(360deg);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .AppSpinner {
+    animation-duration: 1.6s;
+  }
+}
 </style>

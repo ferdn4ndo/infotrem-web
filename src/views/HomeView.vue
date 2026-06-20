@@ -1,5 +1,5 @@
 <template>
-  <main class="HomeView">
+  <section class="HomeView">
     <h1>InfoTrem</h1>
     <p>Explore mídia, rotas, locais, material rodante e informações ferroviárias.</p>
     <nav class="HomeView-Links">
@@ -10,7 +10,7 @@
       <RouterLink to="/resources/locations">Locais</RouterLink>
       <RouterLink to="/resources/routes">Rotas</RouterLink>
     </nav>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

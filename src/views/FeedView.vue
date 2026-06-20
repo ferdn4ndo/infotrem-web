@@ -32,7 +32,7 @@ loadFeed()
 </script>
 
 <template>
-  <main class="FeedView">
+  <section class="FeedView">
     <section v-if="isLoading" class="FeedView-SkeletonList" aria-label="Carregando feed">
       <AppCard v-for="n in 2" :key="`feed-skeleton-${n}`" class="FeedView-SkeletonCard">
         <AppSkeleton width="35%" height="1.25rem" />
@@ -47,7 +47,7 @@ loadFeed()
       description="Ainda não há itens para exibir no feed."
     />
     <feed-list v-else :items="feedItems" />
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">

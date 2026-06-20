@@ -119,7 +119,7 @@ watch(
       await nextTick()
       setBackgroundBlocked(true)
       const targets = focusTargets.value
-      targets[0]?.focus()
+      ;(targets[0] ?? dialogRef.value ?? overlayRef.value)?.focus()
       return
     }
 
@@ -137,13 +137,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="modelValue" ref="overlayRef" class="ConfirmDialog-Overlay" @keydown="trapFocus">
+  <div
+    v-if="modelValue"
+    ref="overlayRef"
+    class="ConfirmDialog-Overlay"
+    tabindex="-1"
+    @keydown="trapFocus"
+  >
     <section
       ref="dialogRef"
       class="ConfirmDialog"
       role="dialog"
       aria-modal="true"
       :aria-labelledby="titleId"
+      tabindex="-1"
     >
       <h2 :id="titleId" class="ConfirmDialog-Title">{{ title }}</h2>
       <p class="ConfirmDialog-Message">{{ message }}</p>
