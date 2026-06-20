@@ -14,6 +14,18 @@ function getPreferredTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    return window.localStorage ?? null
+  } catch {
+    return null
+  }
+}
+
 function setTheme(nextTheme: Theme) {
   if (typeof document !== 'undefined') {
     document.documentElement.setAttribute('data-theme', nextTheme)
@@ -27,8 +39,7 @@ function initTheme() {
     return
   }
 
-  const storedTheme =
-    typeof window !== 'undefined' ? window.localStorage.getItem(THEME_STORAGE_KEY) : null
+  const storedTheme = getLocalStorage()?.getItem(THEME_STORAGE_KEY) ?? null
   const nextTheme: Theme =
     storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : getPreferredTheme()
 
@@ -40,8 +51,10 @@ function toggleTheme() {
   const nextTheme: Theme = theme.value === 'dark' ? 'light' : 'dark'
   setTheme(nextTheme)
 
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+  try {
+    getLocalStorage()?.setItem(THEME_STORAGE_KEY, nextTheme)
+  } catch {
+    // Persistence is best-effort; ignore storage failures.
   }
 }
 

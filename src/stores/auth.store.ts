@@ -12,23 +12,41 @@ import type {
 
 const tokenStorageKey = 'infotrem.authToken'
 
-function readStoredToken() {
+function getLocalStorage(): Storage | null {
   if (typeof window === 'undefined') {
     return null
   }
 
-  return window.localStorage.getItem(tokenStorageKey)
+  try {
+    return window.localStorage ?? null
+  } catch {
+    // Accessing localStorage can throw (opaque origins, privacy mode).
+    return null
+  }
+}
+
+function readStoredToken() {
+  try {
+    return getLocalStorage()?.getItem(tokenStorageKey) ?? null
+  } catch {
+    return null
+  }
 }
 
 function persistToken(token: string | null) {
-  if (typeof window === 'undefined') {
+  const storage = getLocalStorage()
+  if (!storage) {
     return
   }
 
-  if (token) {
-    window.localStorage.setItem(tokenStorageKey, token)
-  } else {
-    window.localStorage.removeItem(tokenStorageKey)
+  try {
+    if (token) {
+      storage.setItem(tokenStorageKey, token)
+    } else {
+      storage.removeItem(tokenStorageKey)
+    }
+  } catch {
+    // Persistence is best-effort; ignore storage failures.
   }
 }
 
