@@ -161,7 +161,7 @@ export const publicResources: ResourceConfig[] = [
     label: 'Comentários',
     path: '/comments',
     entityType: 'comment',
-    access: 'public',
+    access: 'staff',
     primaryFields: ['text', 'status', 'created_at'],
     relations: [
       {
