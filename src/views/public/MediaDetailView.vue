@@ -85,6 +85,7 @@ const managedAssetRelations = computed(() =>
 )
 const mediaReviewsRelation = computed(() => relationByKey.value.reviews ?? null)
 const mediaAlbumsRelation = computed(() => relationByKey.value.albums ?? null)
+const mediaRollingStockRelation = computed(() => relationByKey.value['rolling-stock'] ?? null)
 const visibleRelationSections = computed(() =>
   relationSections.value.filter((section) => !['albums', 'reviews'].includes(section.key))
 )
@@ -107,7 +108,6 @@ const previewUrl = computed(() => {
 
 const relationConfigs = [
   { key: 'image-sizes', detailKey: 'image_sizes', label: 'Tamanhos de imagem' },
-  { key: 'rolling-stock', detailKey: 'rolling_stock', label: 'Material rodante' },
   { key: 'comments', detailKey: 'comments', label: 'Comentários' }
 ]
 
@@ -495,6 +495,13 @@ watchEffect((onCleanup) => {
         :parent-id="mediaId"
         :owner-id="mediaOwnerId"
         :can-manage="canManageOwnedMediaWrites"
+      />
+
+      <RelationManager
+        v-if="mediaRollingStockRelation"
+        :relation="mediaRollingStockRelation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
       />
 
       <RelationManager
