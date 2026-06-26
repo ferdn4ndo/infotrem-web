@@ -37,20 +37,24 @@ The repo uses:
 
 ## Components
 
-Layout components live in `src/components/layout`. Small reusable controls live in `src/components/input`. Feed-specific presentation lives in `src/components/feed`.
+Layout components live in `src/components/layout`. Shared primitives and domain-agnostic building blocks live in `src/components/common`. Legacy small controls still exist in `src/components/input` and are used by the header/search shell.
 
 When adding a component:
 
 - Keep styling scoped by default.
 - Follow the existing `ComponentName-Element` class naming style.
-- Prefer service calls or props for data rather than importing mock arrays directly.
+- Prefer service calls or props for data rather than in-component request duplication.
 - Register new FontAwesome icons in `src/plugins/font-awesome.plugin.ts`.
 
 ## Services And Types
 
-Services in `src/services` return promises even when backed by local constants. Preserve that shape for future backend integration.
+Services in `src/services/api` are backend-backed and should remain the API boundary for views/components. The metadata registry in `src/services/api/resources.ts` powers generic resource flows in `ResourceListView`, `ResourceDetailView`, and `AdminResourceView`.
 
-Types are simple exported aliases in `src/types`. Prefer `export type` for type-only exports in new files.
+Use `ResourceForm` + `RelationManager` for metadata-driven CRUD and nested relations where possible. Prefer bespoke pages only when the UX needs richer aggregate behavior (for example `MediaDetailView`, `AlbumDetailView`, `CompanyDetailView`, `LocationDetailView`, `RollingStockDetailView`, `RouteDetailView`).
+
+Role/access checks for both routes and action buttons should stay aligned with `src/services/api/permissions.ts` and `src/router/index.ts` guards.
+
+Types are exported from `src/types`; prefer `export type` for type-only exports in new files.
 
 ## Editor
 

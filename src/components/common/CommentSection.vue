@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
 import {
   createCommentLike,
   createNestedComment,
@@ -11,6 +12,8 @@ import {
   updateNestedComment,
   type SocialSummary
 } from '@/services/api/social.api'
+import EmptyState from '@/components/common/EmptyState.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
 
@@ -29,6 +32,11 @@ const actionErrorMessage = ref<string | null>(null)
 const editingByRelationId = ref<Record<string, string>>({})
 const replyingByCommentId = ref<Record<string, string>>({})
 const summariesByCommentId = ref<Record<string, SocialSummary>>({})
+const maxDepth = 3
+const expandedThreadIds = ref<Record<string, boolean>>({})
+const loadedSummaryIds = new Set<string>()
+let summaryRequestId = 0
+let isUnmounted = false
 
 const currentUserId = computed(() => auth.user?.id?.toString() ?? null)
 
@@ -63,6 +71,76 @@ function commentDateFor(row: EntityRow) {
 function repliesToFor(row: EntityRow) {
   return stringField(commentFor(row), 'replies_to_id') ?? stringField(row, 'comment_replies_to_id')
 }
+
+type ThreadItem = {
+  row: EntityRow
+  commentId: string
+  parentId: string | null
+  depth: number
+  hiddenRepliesCount: number
+}
+
+function descendantsCount(
+  childrenByParent: Record<string, EntityRow[]>,
+  commentId: string
+): number {
+  const children = childrenByParent[commentId] ?? []
+  return children.reduce(
+    (total, child) => total + 1 + descendantsCount(childrenByParent, commentIdFor(child) ?? ''),
+    0
+  )
+}
+
+const threadedItems = computed<ThreadItem[]>(() => {
+  const withId = props.items.filter((row) => Boolean(commentIdFor(row)))
+  const rowsById = new Map(withId.map((row) => [commentIdFor(row) as string, row]))
+  const childrenByParent: Record<string, EntityRow[]> = {}
+  const roots: EntityRow[] = []
+
+  for (const row of withId) {
+    const parentId = repliesToFor(row)
+    if (parentId && rowsById.has(parentId)) {
+      childrenByParent[parentId] = [...(childrenByParent[parentId] ?? []), row]
+      continue
+    }
+    roots.push(row)
+  }
+
+  const ordered: ThreadItem[] = []
+  const walk = (row: EntityRow, depth: number) => {
+    const commentId = commentIdFor(row)
+    if (!commentId) {
+      return
+    }
+
+    const parentId = repliesToFor(row)
+    const children = childrenByParent[commentId] ?? []
+    const isCollapsed =
+      depth >= maxDepth - 1 && children.length > 0 && !expandedThreadIds.value[commentId]
+
+    ordered.push({
+      row,
+      commentId,
+      parentId,
+      depth,
+      hiddenRepliesCount: isCollapsed ? descendantsCount(childrenByParent, commentId) : 0
+    })
+
+    if (isCollapsed) {
+      return
+    }
+
+    for (const child of children) {
+      walk(child, depth + 1)
+    }
+  }
+
+  for (const root of roots) {
+    walk(root, 0)
+  }
+
+  return ordered
+})
 
 function stringField(row: EntityRow, field: string) {
   const value = row[field]
@@ -114,6 +192,13 @@ function toggleReply(row: EntityRow) {
   replyingByCommentId.value = {
     ...replyingByCommentId.value,
     [commentId]: replyingByCommentId.value[commentId] ?? ''
+  }
+}
+
+function toggleExpandedReplies(commentId: string) {
+  expandedThreadIds.value = {
+    ...expandedThreadIds.value,
+    [commentId]: !expandedThreadIds.value[commentId]
   }
 }
 
@@ -219,95 +304,183 @@ async function loadSummary(commentId: string) {
     ...summariesByCommentId.value,
     [commentId]: await getCommentSocialSummary(commentId)
   }
+  loadedSummaryIds.add(commentId)
 }
 
 watch(
   () => props.items,
-  async (items) => {
+  (items, _previous, onCleanup) => {
+    const requestId = ++summaryRequestId
+    let cancelled = false
+    onCleanup(() => {
+      cancelled = true
+    })
+
     const ids = items.map(commentIdFor).filter((id): id is string => Boolean(id))
-    await Promise.all(ids.map((id) => loadSummary(id)))
+    const currentIdSet = new Set(ids)
+    const staleIds = Object.keys(summariesByCommentId.value).filter((id) => !currentIdSet.has(id))
+    if (staleIds.length > 0) {
+      const nextSummaries = { ...summariesByCommentId.value }
+      for (const staleId of staleIds) {
+        delete nextSummaries[staleId]
+        loadedSummaryIds.delete(staleId)
+      }
+      summariesByCommentId.value = nextSummaries
+    }
+
+    const staleExpandedIds = Object.keys(expandedThreadIds.value).filter(
+      (id) => !currentIdSet.has(id)
+    )
+    if (staleExpandedIds.length > 0) {
+      const nextExpanded = { ...expandedThreadIds.value }
+      for (const staleId of staleExpandedIds) {
+        delete nextExpanded[staleId]
+      }
+      expandedThreadIds.value = nextExpanded
+    }
+
+    const idsToFetch = ids.filter((id) => !loadedSummaryIds.has(id))
+    if (idsToFetch.length === 0) {
+      return
+    }
+
+    void Promise.all(
+      idsToFetch.map(async (id) => {
+        try {
+          const summary = await getCommentSocialSummary(id)
+          if (cancelled || isUnmounted || requestId !== summaryRequestId) {
+            return
+          }
+          loadedSummaryIds.add(id)
+          summariesByCommentId.value = {
+            ...summariesByCommentId.value,
+            [id]: summary
+          }
+        } catch (error) {
+          if (cancelled || isUnmounted || requestId !== summaryRequestId) {
+            return
+          }
+          console.warn('[CommentSection] Failed to load comment social summary.', error)
+        }
+      })
+    )
   },
   { immediate: true }
 )
+
+onUnmounted(() => {
+  isUnmounted = true
+  summaryRequestId += 1
+})
 </script>
 
 <template>
   <div class="CommentSection">
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
-
-    <p v-if="items.length === 0">Nenhum comentário encontrado.</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
+    <EmptyState
+      v-if="threadedItems.length === 0"
+      title="Nenhum comentário encontrado"
+      description="Quando houver comentários, eles aparecerão aqui."
+    />
 
     <article
-      v-for="row in items"
-      :key="String(row.id)"
+      v-for="thread in threadedItems"
+      :key="thread.commentId"
       class="CommentSection-Item"
+      :style="{ '--thread-depth': String(thread.depth) }"
       data-cy="comment-row"
     >
-      <p v-if="repliesToFor(row)" class="CommentSection-ReplyContext">
-        Em resposta a {{ repliesToFor(row) }}
+      <p v-if="thread.parentId" class="CommentSection-ReplyContext">Resposta em thread</p>
+      <p v-if="thread.hiddenRepliesCount > 0" class="CommentSection-Collapsed">
+        {{ thread.hiddenRepliesCount }} resposta(s) adicional(is) ocultas para manter a leitura.
       </p>
+      <AppButton
+        v-if="thread.hiddenRepliesCount > 0"
+        type="button"
+        variant="ghost"
+        data-cy="comment-expand-replies"
+        :aria-expanded="Boolean(expandedThreadIds[thread.commentId])"
+        @click="toggleExpandedReplies(thread.commentId)"
+      >
+        {{ expandedThreadIds[thread.commentId] ? 'Ocultar respostas' : 'Expandir respostas' }}
+      </AppButton>
 
-      <p class="CommentSection-Text">{{ commentTextFor(row) || 'Comentário sem texto.' }}</p>
+      <p class="CommentSection-Text">{{ commentTextFor(thread.row) || 'Comentário sem texto.' }}</p>
 
       <p class="CommentSection-Meta">
-        {{ commentDateFor(row) ?? 'Data desconhecida' }}
-        <span v-if="summariesByCommentId[commentIdFor(row) ?? '']">
-          · {{ summariesByCommentId[commentIdFor(row) ?? ''].likes_count }} curtidas
+        {{ commentDateFor(thread.row) ?? 'Data desconhecida' }}
+        <span v-if="summariesByCommentId[thread.commentId]">
+          · {{ summariesByCommentId[thread.commentId].likes_count }} curtidas
         </span>
       </p>
 
       <div class="CommentSection-Actions">
-        <button
+        <AppButton
           v-if="auth.isLoggedIn"
           type="button"
           data-cy="comment-like"
-          @click="toggleLike(row)"
+          @click="toggleLike(thread.row)"
         >
-          {{ summariesByCommentId[commentIdFor(row) ?? '']?.liked ? 'Remover curtida' : 'Curtir' }}
-        </button>
-        <button
+          {{ summariesByCommentId[thread.commentId]?.liked ? 'Remover curtida' : 'Curtir' }}
+        </AppButton>
+        <AppButton
           v-if="auth.isLoggedIn"
           type="button"
           data-cy="comment-reply"
-          @click="toggleReply(row)"
+          @click="toggleReply(thread.row)"
         >
           Responder
-        </button>
-        <button v-if="canManage(row)" type="button" data-cy="comment-edit" @click="startEdit(row)">
+        </AppButton>
+        <AppButton
+          v-if="canManage(thread.row)"
+          type="button"
+          data-cy="comment-edit"
+          @click="startEdit(thread.row)"
+        >
           Editar
-        </button>
-        <button
-          v-if="canManage(row)"
+        </AppButton>
+        <AppButton
+          v-if="canManage(thread.row)"
           type="button"
           data-cy="comment-delete"
-          @click="removeComment(row)"
+          variant="danger"
+          @click="removeComment(thread.row)"
         >
           Remover
-        </button>
+        </AppButton>
         <RouterLink v-if="!auth.isLoggedIn" to="/login">Entre para interagir</RouterLink>
       </div>
 
       <form
-        v-if="editingByRelationId[rowId(row) ?? ''] !== undefined"
-        @submit.prevent="saveEdit(row)"
+        v-if="editingByRelationId[rowId(thread.row) ?? ''] !== undefined"
+        @submit.prevent="saveEdit(thread.row)"
       >
-        <textarea v-model="editingByRelationId[rowId(row) ?? '']" data-cy="comment-edit-text" />
-        <button type="submit" data-cy="comment-edit-submit">Salvar</button>
-        <button type="button" @click="cancelEdit(row)">Cancelar</button>
+        <textarea
+          v-model="editingByRelationId[rowId(thread.row) ?? '']"
+          data-cy="comment-edit-text"
+          aria-label="Editar comentário"
+        />
+        <AppButton type="submit" data-cy="comment-edit-submit">Salvar</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelEdit(thread.row)"
+          >Cancelar</AppButton
+        >
       </form>
 
       <form
-        v-if="replyingByCommentId[commentIdFor(row) ?? ''] !== undefined"
-        @submit.prevent="createReply(row)"
+        v-if="replyingByCommentId[commentIdFor(thread.row) ?? ''] !== undefined"
+        @submit.prevent="createReply(thread.row)"
       >
         <textarea
-          v-model="replyingByCommentId[commentIdFor(row) ?? '']"
+          v-model="replyingByCommentId[commentIdFor(thread.row) ?? '']"
           data-cy="comment-reply-text"
           placeholder="Responder comentário"
+          aria-label="Responder comentário"
         />
-        <button type="submit" data-cy="comment-reply-submit">Responder</button>
-        <button type="button" @click="cancelReply(row)">Cancelar</button>
+        <AppButton type="submit" data-cy="comment-reply-submit">Responder</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelReply(thread.row)"
+          >Cancelar</AppButton
+        >
       </form>
     </article>
   </div>
@@ -316,21 +489,29 @@ watch(
 <style scoped lang="scss">
 .CommentSection {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 
   &-Item {
     display: grid;
-    gap: 10px;
+    gap: var(--space-2);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: $radius-md;
     background: var(--color-background-soft);
-    padding: 16px;
+    padding: var(--space-3);
+    margin-inline-start: calc(var(--thread-depth, 0) * var(--space-4));
   }
 
   &-ReplyContext,
   &-Meta {
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
+  }
+
+  &-Collapsed {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-style: italic;
   }
 
   &-Text {
@@ -341,12 +522,12 @@ watch(
   &-Actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   form {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {

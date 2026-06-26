@@ -46,22 +46,24 @@ function handleProfileClick() {
     <div class="ProfileCollapseCard-Bottom">
       <ul class="ProfileCollapseCard-Links">
         <li>
-          <a
+          <button
+            type="button"
             @click.stop="handleLogoutClick"
             class="ProfileCollapseCard-Link"
             title="Clique aqui para encerrar sua sessão atual."
           >
             Sair
-          </a>
+          </button>
         </li>
         <li>
-          <a
+          <button
+            type="button"
             @click.stop="handleProfileClick"
             class="ProfileCollapseCard-Link"
             title="Clique aqui para ver o seu perfil."
           >
             Meu Perfil
-          </a>
+          </button>
         </li>
       </ul>
     </div>
@@ -76,6 +78,7 @@ function handleProfileClick() {
   border-style: solid;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+  padding: var(--space-2);
 
   &-AvatarWrapper {
     flex: 0 0 50px;
@@ -93,30 +96,44 @@ function handleProfileClick() {
 
   &-DataWrapper {
     flex: 1 1 auto;
-    margin: 0 10px;
+    margin: 0 var(--space-2);
   }
 
   &-Name {
-    font-size: 16px;
+    font-size: var(--font-size-md);
     text-wrap: nowrap;
   }
 
   &-Email {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
     text-wrap: nowrap;
   }
 
   &-Links {
-    margin: 2px;
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
     text-wrap: nowrap;
-    text-align: right;
+    text-align: left;
   }
 
   &-Link {
-    font-size: 14px;
-    padding: 0 5px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    background: var(--color-background-soft);
+    font-size: var(--font-size-sm);
+    padding: var(--space-2);
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-border);
+      outline-offset: 2px;
+    }
   }
 
   &-Top {
@@ -125,7 +142,7 @@ function handleProfileClick() {
   }
 
   &-Bottom {
-    padding-left: 10px;
+    padding-top: var(--space-2);
   }
 }
 </style>

@@ -1,48 +1,63 @@
 <script setup lang="ts">
-import TheCard from '@/components/layout/TheCard.vue'
+import { RouterLink } from 'vue-router'
+
+import AppCard from '@/components/common/AppCard.vue'
 import MediaBasicInfoTable from '@/components/table/MediaBasicInfoTable.vue'
+import { toFallbackImage } from '@/services/api/media.api'
 import { type FeedMediaItem } from '@/types/feed-media-item.type'
 
 defineProps<{
   mediaItem: FeedMediaItem
 }>()
-
-function getSubtitle() {
-  // ToDo: process date
-  return 'há 12 horas'
-}
 </script>
 
 <template>
-  <the-card class="FeedItem">
-    <div class="FeedItem-Title">
-      {{ mediaItem.title }}
-    </div>
+  <AppCard class="FeedItem">
+    <RouterLink class="FeedItem-TitleLink" :to="`/media/${mediaItem.mediaId}`">
+      <div class="FeedItem-Title">
+        {{ mediaItem.title }}
+      </div>
+    </RouterLink>
 
     <div class="FeedItem-SubTitle">
-      {{ getSubtitle() }}
+      {{ mediaItem.subtitle }}
     </div>
 
     <div class="FeedItem-ContentWrapper">
       <div class="FeedItem-Media">
-        <img :src="mediaItem.mediaUrl" :alt="mediaItem.mediaAlt" class="FeedItem-Image" />
+        <img
+          :src="mediaItem.mediaUrl"
+          :alt="mediaItem.mediaAlt"
+          class="FeedItem-Image"
+          @error="toFallbackImage"
+        />
       </div>
 
       <media-basic-info-table class="FeedItem-Data" :media-item="mediaItem" />
     </div>
-  </the-card>
+  </AppCard>
 </template>
 
 <style lang="scss" scoped>
 .FeedItem {
+  &-TitleLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-border);
+      outline-offset: 2px;
+    }
+  }
+
   &-Title {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: bold;
-    margin-bottom: -4px;
+    margin-bottom: calc(-1 * var(--space-1));
   }
 
   &-SubTitle {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
   }
 
@@ -50,8 +65,8 @@ function getSubtitle() {
     display: flex;
     flex-wrap: wrap;
     border-top: 1px solid var(--color-border);
-    padding-top: 10px;
-    margin-top: 5px;
+    padding-top: var(--space-2);
+    margin-top: var(--space-1);
     justify-content: space-between;
   }
 

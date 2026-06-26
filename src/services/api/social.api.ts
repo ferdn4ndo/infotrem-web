@@ -1,4 +1,5 @@
 import { apiClient } from '@/services/http/api-client'
+import type { ListParams } from '@/types/api/pagination.type'
 import type { EntityRow } from '@/types/domain/common.type'
 
 export type NestedCommentPayload = {
@@ -17,8 +18,20 @@ export type SocialSummary = {
   favorite_id?: string | null
 }
 
-export function listNested(parentPath: string, relation: string) {
-  return apiClient.get<{ items: EntityRow[]; count: number }>(`${parentPath}/${relation}`)
+type RequestSignalOptions = {
+  signal?: AbortSignal
+}
+
+export function listNested(
+  parentPath: string,
+  relation: string,
+  params: ListParams = {},
+  options: RequestSignalOptions = {}
+) {
+  return apiClient.get<{ items: EntityRow[]; count: number }>(`${parentPath}/${relation}`, {
+    query: params,
+    signal: options.signal
+  })
 }
 
 export function createNested(parentPath: string, relation: string, payload: EntityRow = {}) {

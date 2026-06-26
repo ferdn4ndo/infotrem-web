@@ -2,7 +2,15 @@ import { resourceForEntityType } from '@/services/api/resources'
 import type { EntityRow } from '@/types/domain/common.type'
 
 export type EntityRouteTarget = {
-  name: 'album-detail' | 'media-detail' | 'resource-detail' | 'route-section-detail'
+  name:
+    | 'album-detail'
+    | 'media-detail'
+    | 'resource-detail'
+    | 'route-section-detail'
+    | 'company-detail'
+    | 'location-detail'
+    | 'rolling-stock-detail'
+    | 'route-detail'
   params: Record<string, string>
 }
 
@@ -20,47 +28,43 @@ type ParentRouteConfig = {
 
 const entityLabels: Record<string, string> = {
   album: 'Album',
-  comment: 'Comment',
-  company: 'Company',
-  company_information: 'Company information',
-  company_paint_scheme: 'Paint scheme',
-  company_paint_scheme_information: 'Paint scheme information',
-  freight_car: 'Freight car',
-  freight_car_category: 'Freight car category',
-  freight_car_gross_weight_type: 'Freight car gross weight type',
-  freight_car_type: 'Freight car type',
-  information: 'Information',
-  location: 'Location',
-  location_city: 'City',
-  location_information: 'Location information',
-  location_state: 'State',
-  locomotive: 'Locomotive',
-  locomotive_design: 'Locomotive design',
-  manufacturer: 'Manufacturer',
-  manufacturer_information: 'Manufacturer information',
-  media: 'Media',
-  non_revenue_car: 'Non-revenue car',
-  non_revenue_car_type: 'Non-revenue car type',
-  passenger_car: 'Passenger car',
-  passenger_car_material: 'Passenger car material',
-  passenger_car_type: 'Passenger car type',
-  path: 'Path',
-  rolling_stock: 'Rolling stock',
-  route: 'Route',
-  route_information: 'Route information',
-  route_section: 'Route section',
-  route_section_information: 'Route section information',
+  comment: 'Comentario',
+  company: 'Empresa',
+  company_information: 'Informacao da empresa',
+  company_paint_scheme: 'Pintura da empresa',
+  company_paint_scheme_information: 'Informacao da pintura',
+  freight_car: 'Vagao de carga',
+  freight_car_category: 'Categoria de vagao de carga',
+  freight_car_gross_weight_type: 'Tipo de peso bruto de vagao de carga',
+  freight_car_type: 'Tipo de vagao de carga',
+  information: 'Informacao',
+  location: 'Local',
+  location_city: 'Cidade',
+  location_information: 'Informacao do local',
+  location_state: 'Estado',
+  locomotive: 'Locomotiva',
+  locomotive_design: 'Projeto de locomotiva',
+  manufacturer: 'Fabricante',
+  manufacturer_information: 'Informacao do fabricante',
+  media: 'Midia',
+  non_revenue_car: 'Veiculo de servico',
+  non_revenue_car_type: 'Tipo de veiculo de servico',
+  passenger_car: 'Carro de passageiros',
+  passenger_car_material: 'Material de carro de passageiros',
+  passenger_car_type: 'Tipo de carro de passageiros',
+  path: 'Linha',
+  rolling_stock: 'Material rodante',
+  route: 'Rota',
+  route_information: 'Informacao da rota',
+  route_section: 'Secao da rota',
+  route_section_information: 'Informacao da secao da rota',
   sigo_regional: 'SIGO regional',
-  sigo_series_information: 'SIGO series information',
-  track_gauge: 'Track gauge'
+  sigo_series_information: 'Informacao da serie SIGO',
+  track_gauge: 'Bitola'
 }
 
 const parentRoutes: Record<string, ParentRouteConfig> = {
   company_information: { resource: 'companies', idField: 'company_id' },
-  company_paint_scheme_information: {
-    resource: 'paint-schemes',
-    idField: 'paint_scheme_id'
-  },
   location_city: {
     resource: 'states',
     idField: 'state_id',
@@ -71,21 +75,21 @@ const parentRoutes: Record<string, ParentRouteConfig> = {
   route_information: { resource: 'routes', idField: 'railroad_route_id' },
   route_section_information: {
     resource: 'routes',
-    idField: 'railroad_route_id',
-    reason:
-      'Route section information detail pages are not available yet; linked to the parent route.'
+    idField: 'railroad_route_id'
   },
   sigo_series_information: {
     resource: 'information',
-    idField: 'information_id',
-    reason:
-      'SIGO series information detail pages are not available yet; linked to the parent information record.'
+    idField: 'information_id'
   }
 }
 
 const directRoutes: Record<string, { name: EntityRouteTarget['name'] }> = {
   album: { name: 'album-detail' },
-  media: { name: 'media-detail' }
+  media: { name: 'media-detail' },
+  company: { name: 'company-detail' },
+  location: { name: 'location-detail' },
+  rolling_stock: { name: 'rolling-stock-detail' },
+  route: { name: 'route-detail' }
 }
 
 function idToString(value: unknown) {
@@ -106,6 +110,34 @@ export function routeForEntityRow(row: EntityRow): EntityRouteResolution {
   const directResource = resourceForEntityType(entityType)
   const directRoute = directRoutes[entityType]
   const directId = idToString(row.id)
+
+  if (entityType === 'company_paint_scheme_information') {
+    const companyId = idToString(row.company_id)
+    if (companyId) {
+      return {
+        label,
+        reason:
+          'Informações de pintura são tratadas dentro da empresa; direcionado para a empresa vinculada.',
+        target: {
+          name: 'company-detail',
+          params: { id: companyId }
+        }
+      }
+    }
+
+    const paintSchemeId = idToString(row.paint_scheme_id)
+    if (paintSchemeId) {
+      return {
+        label,
+        reason:
+          'Informações de pintura são tratadas dentro da empresa; direcionado para a pintura vinculada.',
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'paint-schemes', id: paintSchemeId }
+        }
+      }
+    }
+  }
 
   if (directRoute && directId) {
     return {
@@ -147,7 +179,43 @@ export function routeForEntityRow(row: EntityRow): EntityRouteResolution {
     }
   }
 
-  if (directResource && directId) {
+  if (entityType === 'sigo_series_information') {
+    const informationId = idToString(row.information_id)
+    if (informationId) {
+      return {
+        label,
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'information', id: informationId }
+        }
+      }
+    }
+  }
+
+  if (entityType === 'location_city') {
+    const stateId = idToString(row.state_id)
+    if (stateId) {
+      return {
+        label,
+        reason: 'City detail pages are not available yet; linked to the parent state.',
+        target: {
+          name: 'resource-detail',
+          params: { resource: 'states', id: stateId }
+        }
+      }
+    }
+  }
+
+  if (
+    directResource &&
+    directId &&
+    ![
+      'route_section_information',
+      'sigo_series_information',
+      'location_city',
+      'company_paint_scheme_information'
+    ].includes(entityType)
+  ) {
     return {
       label,
       target: {

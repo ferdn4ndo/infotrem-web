@@ -41,6 +41,11 @@ $color-secondary-dark-hover: rgba(78, 82, 86, 0.9);
 $color-secondary-dark-border: rgba(49, 51, 53, 0.9);
 $color-secondary-dark-active: rgba(93, 98, 105, 0.9);
 
+$color-danger-light-normal: #b30024;
+$color-danger-light-border: #8f001d;
+$color-danger-dark-normal: #d34763;
+$color-danger-dark-border: #bb2f4c;
+
 $color-input-dark-background: rgba(60, 60, 60, 0.9);
 $color-input-dark-focused: rgba(80, 80, 80, 0.9);
 $color-input-dark-border: rgba(85, 85, 85, 0.9);
@@ -73,10 +78,13 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
   --color-secondary-hover: #{$color-secondary-light-hover};
   --color-secondary-border: #{$color-secondary-light-border};
   --color-secondary-active: #{$color-secondary-light-active};
+  --color-danger-normal: #{$color-danger-light-normal};
+  --color-danger-border: #{$color-danger-light-border};
 
   --color-input-background: #{$color-input-light-background};
   --color-input-focused: #{$color-input-light-focused};
   --color-input-border: #{$color-input-light-border};
+  --section-gap: var(--space-6);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -103,6 +111,8 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
     --color-secondary-hover: #{$color-secondary-dark-hover};
     --color-secondary-border: #{$color-secondary-dark-border};
     --color-secondary-active: #{$color-secondary-dark-active};
+    --color-danger-normal: #{$color-danger-dark-normal};
+    --color-danger-border: #{$color-danger-dark-border};
 
     --color-input-background: #{$color-input-dark-background};
     --color-input-focused: #{$color-input-dark-focused};
@@ -110,10 +120,58 @@ $color-input-light-border: rgba(144, 144, 144, 0.9);
   }
 }
 
-// *,
-// *::before,
-// *::after {
-//   box-sizing: border-box;
-//   margin: 0;
-//   font-weight: normal;
-// }
+:root[data-theme='light'] {
+  --color-background: #{$color-white};
+  --color-background-soft: #{$color-white-soft};
+  --color-background-mute: #{$color-white-mute};
+  --color-border: #{$color-divider-light-2};
+  --color-border-hover: #{$color-divider-light-1};
+  --color-shadow: #{$color-shadow-light};
+  --color-heading: #{$color-text-light-1};
+  --color-text: #{$color-text-light-1};
+  --color-text-secondary: #{$color-text-light-2};
+  --color-primary-normal: #{$color-primary-light-normal};
+  --color-primary-hover: #{$color-primary-light-hover};
+  --color-primary-border: #{$color-primary-light-border};
+  --color-primary-active: #{$color-primary-light-active};
+  --color-secondary-normal: #{$color-secondary-light-normal};
+  --color-secondary-hover: #{$color-secondary-light-hover};
+  --color-secondary-border: #{$color-secondary-light-border};
+  --color-secondary-active: #{$color-secondary-light-active};
+  --color-danger-normal: #{$color-danger-light-normal};
+  --color-danger-border: #{$color-danger-light-border};
+  --color-input-background: #{$color-input-light-background};
+  --color-input-focused: #{$color-input-light-focused};
+  --color-input-border: #{$color-input-light-border};
+}
+
+:root[data-theme='dark'] {
+  --color-background: #{$color-black};
+  --color-background-soft: #{$color-black-soft};
+  --color-background-mute: #{$color-black-mute};
+  --color-border: #{$color-divider-dark-2};
+  --color-border-hover: #{$color-divider-dark-1};
+  --color-shadow: #{$color-shadow-dark};
+  --color-heading: #{$color-text-dark-1};
+  --color-text: #{$color-text-dark-1};
+  --color-text-secondary: #{$color-text-dark-2};
+  --color-primary-normal: #{$color-primary-dark-normal};
+  --color-primary-hover: #{$color-primary-dark-hover};
+  --color-primary-border: #{$color-primary-dark-border};
+  --color-primary-active: #{$color-primary-dark-active};
+  --color-secondary-normal: #{$color-secondary-dark-normal};
+  --color-secondary-hover: #{$color-secondary-dark-hover};
+  --color-secondary-border: #{$color-secondary-dark-border};
+  --color-secondary-active: #{$color-secondary-dark-active};
+  --color-danger-normal: #{$color-danger-dark-normal};
+  --color-danger-border: #{$color-danger-dark-border};
+  --color-input-background: #{$color-input-dark-background};
+  --color-input-focused: #{$color-input-dark-focused};
+  --color-input-border: #{$color-input-dark-border};
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

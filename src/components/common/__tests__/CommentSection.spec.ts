@@ -85,14 +85,90 @@ describe('CommentSection', () => {
     expect(mocks.getCommentSocialSummary).toHaveBeenCalledWith('comment-1')
   })
 
+  it('renders threaded replies and collapses depth above three levels', async () => {
+    const wrapper = mount(CommentSection, {
+      props: {
+        parentPath: '/media/media-1',
+        items: [
+          commentRow(),
+          commentRow({
+            id: 'join-2',
+            comment_id: 'comment-2',
+            comment: {
+              id: 'comment-2',
+              text: 'Reply level 1',
+              created_by_id: 'user-2',
+              created_at: '2026-01-01T00:01:00Z',
+              replies_to_id: 'comment-1'
+            }
+          }),
+          commentRow({
+            id: 'join-3',
+            comment_id: 'comment-3',
+            comment: {
+              id: 'comment-3',
+              text: 'Reply level 2',
+              created_by_id: 'user-3',
+              created_at: '2026-01-01T00:02:00Z',
+              replies_to_id: 'comment-2'
+            }
+          }),
+          commentRow({
+            id: 'join-4',
+            comment_id: 'comment-4',
+            comment: {
+              id: 'comment-4',
+              text: 'Reply level 3',
+              created_by_id: 'user-4',
+              created_at: '2026-01-01T00:03:00Z',
+              replies_to_id: 'comment-3'
+            }
+          }),
+          commentRow({
+            id: 'join-5',
+            comment_id: 'comment-5',
+            comment: {
+              id: 'comment-5',
+              text: 'Reply level 4',
+              created_by_id: 'user-5',
+              created_at: '2026-01-01T00:04:00Z',
+              replies_to_id: 'comment-4'
+            }
+          })
+        ]
+      },
+      global: {
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a><slot /></a>'
+          }
+        }
+      }
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Reply level 1')
+    expect(wrapper.text()).toContain('Reply level 2')
+    expect(wrapper.text()).toContain('resposta(s) adicional(is) ocultas')
+    expect(wrapper.text()).not.toContain('Reply level 3')
+    expect(wrapper.text()).not.toContain('Reply level 4')
+  })
+
   it('allows authenticated users to reply to a comment', async () => {
     mocks.createNestedComment.mockResolvedValue({})
     const wrapper = mountSection()
     await flushPromises()
 
-    await wrapper.get('button:nth-of-type(2)').trigger('click')
-    await wrapper.get('form textarea').setValue('Reply text')
-    await wrapper.get('form').trigger('submit')
+    await wrapper.get('[data-cy="comment-reply"]').trigger('click')
+    await wrapper.get('[data-cy="comment-reply-text"]').setValue('Reply text')
+    const replyForm = wrapper
+      .findAll('form')
+      .find((form) => form.find('[data-cy="comment-reply-text"]').exists())
+    if (!replyForm) {
+      throw new Error('Reply form not found')
+    }
+    await replyForm.trigger('submit')
 
     expect(mocks.createNestedComment).toHaveBeenCalledWith(
       '/media/media-1',
@@ -108,9 +184,15 @@ describe('CommentSection', () => {
     const wrapper = mountSection()
     await flushPromises()
 
-    await wrapper.get('button:nth-of-type(3)').trigger('click')
-    await wrapper.get('form textarea').setValue('Updated comment')
-    await wrapper.get('form').trigger('submit')
+    await wrapper.get('[data-cy="comment-edit"]').trigger('click')
+    await wrapper.get('[data-cy="comment-edit-text"]').setValue('Updated comment')
+    const editForm = wrapper
+      .findAll('form')
+      .find((form) => form.find('[data-cy="comment-edit-text"]').exists())
+    if (!editForm) {
+      throw new Error('Edit form not found')
+    }
+    await editForm.trigger('submit')
 
     expect(mocks.updateNestedComment).toHaveBeenCalledWith(
       '/media/media-1',
@@ -119,7 +201,7 @@ describe('CommentSection', () => {
       null
     )
 
-    await wrapper.get('button:nth-of-type(4)').trigger('click')
+    await wrapper.get('[data-cy="comment-delete"]').trigger('click')
     expect(mocks.deleteNestedComment).toHaveBeenCalledWith('/media/media-1', 'join-1')
   })
 
@@ -128,9 +210,46 @@ describe('CommentSection', () => {
     const wrapper = mountSection()
     await flushPromises()
 
-    await wrapper.get('button:first-of-type').trigger('click')
+    await wrapper.get('[data-cy="comment-like"]').trigger('click')
 
     expect(mocks.createCommentLike).toHaveBeenCalledWith('comment-1')
+  })
+
+  it('loads social summaries only for newly added comment ids', async () => {
+    const wrapper = mount(CommentSection, {
+      props: {
+        parentPath: '/media/media-1',
+        items: [commentRow(), commentRow({ id: 'join-2', comment_id: 'comment-2' })]
+      },
+      global: {
+        stubs: {
+          RouterLink: { props: ['to'], template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+    expect(mocks.getCommentSocialSummary).toHaveBeenCalledTimes(2)
+
+    await wrapper.setProps({
+      items: [
+        commentRow(),
+        commentRow({ id: 'join-2', comment_id: 'comment-2' }),
+        commentRow({
+          id: 'join-3',
+          comment_id: 'comment-3',
+          comment: {
+            id: 'comment-3',
+            text: 'Third comment',
+            created_by_id: 'user-3',
+            created_at: '2026-01-01T00:03:00Z'
+          }
+        })
+      ]
+    })
+    await flushPromises()
+
+    expect(mocks.getCommentSocialSummary).toHaveBeenCalledTimes(3)
+    expect(mocks.getCommentSocialSummary).toHaveBeenLastCalledWith('comment-3')
   })
 
   it('shows a login link instead of mutation controls for anonymous users', async () => {

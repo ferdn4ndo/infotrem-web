@@ -2,15 +2,26 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppTextarea from '@/components/common/AppTextarea.vue'
 import CommentSection from '@/components/common/CommentSection.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
-import ReviewSection from '@/components/common/ReviewSection.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import {
+  MEDIA_FALLBACK_LOGO_URL,
   createMediaDownload,
+  getMediaDetail,
   getMedia,
+  isVideoMedia,
   listMediaRelation,
-  mediaRawUrl
+  mediaPreviewUrl,
+  mediaRawUrl,
+  toFallbackImage
 } from '@/services/api/media.api'
 import {
   createNested,
@@ -19,7 +30,7 @@ import {
   getSocialSummary,
   type SocialSummary
 } from '@/services/api/social.api'
-import { reviewDecisions, type ReviewDecision } from '@/services/api/review-decisions'
+import { findResource, type RelationConfig } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
 import type { MediaRow } from '@/types/domain/media.type'
@@ -27,6 +38,7 @@ import type { MediaRow } from '@/types/domain/media.type'
 type RelationSection = {
   key: string
   label: string
+  detailKey: string
   items: EntityRow[]
   error: string | null
 }
@@ -37,28 +49,66 @@ const item = ref<MediaRow | null>(null)
 const socialSummary = ref<SocialSummary | null>(null)
 const relationSections = ref<RelationSection[]>([])
 const commentText = ref('')
-const reviewDecision = ref<ReviewDecision>('approve')
-const reviewComment = ref('')
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const actionMessage = ref<string | null>(null)
 const actionErrorMessage = ref<string | null>(null)
 const rawHref = ref<string | null>(null)
+let activeRequestId = 0
 
 const mediaId = computed(() => String(route.params.id ?? ''))
 const storageId = computed(() => stringField(item.value, 'filemgr_storage_id'))
 const fileId = computed(() => stringField(item.value, 'filemgr_file_id'))
 const canDownload = computed(() => Boolean(storageId.value && fileId.value))
+const mediaResource = computed(() => findResource('media'))
+const mediaOwnerId = computed(() => stringField(item.value, 'created_by_id'))
+const canManageOwnedMediaWrites = computed(() => {
+  const currentUserId = String(auth.user?.id ?? '')
+  if (!currentUserId) {
+    return false
+  }
+  return (
+    auth.isStaff ||
+    auth.isAdmin ||
+    (mediaOwnerId.value !== null && mediaOwnerId.value === currentUserId)
+  )
+})
+const relationByKey = computed<Record<string, RelationConfig>>(() =>
+  Object.fromEntries(
+    (mediaResource.value?.relations ?? []).map((relation) => [relation.key, relation])
+  )
+)
+const managedAssetRelations = computed(() =>
+  ['images', 'videos', 'documents']
+    .map((key) => relationByKey.value[key])
+    .filter((relation): relation is RelationConfig => Boolean(relation))
+)
+const mediaReviewsRelation = computed(() => relationByKey.value.reviews ?? null)
+const mediaAlbumsRelation = computed(() => relationByKey.value.albums ?? null)
+const visibleRelationSections = computed(() =>
+  relationSections.value.filter((section) => !['albums', 'reviews'].includes(section.key))
+)
+const previewIsVideo = computed(() => (item.value ? isVideoMedia(item.value) : false))
+const previewUrl = computed(() => {
+  if (!item.value) {
+    return MEDIA_FALLBACK_LOGO_URL
+  }
+
+  if (previewIsVideo.value) {
+    return (
+      stringField(item.value, 'original_url') ??
+      stringField(item.value, 'media_url') ??
+      MEDIA_FALLBACK_LOGO_URL
+    )
+  }
+
+  return mediaPreviewUrl(item.value)
+})
 
 const relationConfigs = [
-  { key: 'images', label: 'Imagens' },
-  { key: 'image-sizes', label: 'Tamanhos de imagem' },
-  { key: 'videos', label: 'Vídeos' },
-  { key: 'documents', label: 'Documentos' },
-  { key: 'albums', label: 'Álbuns' },
-  { key: 'rolling-stock', label: 'Material rodante' },
-  { key: 'comments', label: 'Comentários' },
-  { key: 'reviews', label: 'Avaliações' }
+  { key: 'image-sizes', detailKey: 'image_sizes', label: 'Tamanhos de imagem' },
+  { key: 'rolling-stock', detailKey: 'rolling_stock', label: 'Material rodante' },
+  { key: 'comments', detailKey: 'comments', label: 'Comentários' }
 ]
 
 function stringField(row: EntityRow | null, field: string) {
@@ -84,19 +134,70 @@ async function loadRelation(key: string, label: string): Promise<RelationSection
   try {
     const response = await listMediaRelation(mediaId.value, key)
 
-    return { key, label, items: response.items, error: null }
+    return { key, detailKey: key.replace(/-/g, '_'), label, items: response.items, error: null }
   } catch (error) {
     return {
       key,
       label,
+      detailKey: key.replace(/-/g, '_'),
       items: [],
       error: error instanceof Error ? error.message : `Não foi possível carregar ${label}.`
     }
   }
 }
 
-async function loadMedia() {
+function toRelationItems(detail: EntityRow, detailKey: string): EntityRow[] {
+  const raw = detail[detailKey] ?? detail[detailKey.replace(/_/g, '-')]
+  if (Array.isArray(raw)) {
+    return raw as EntityRow[]
+  }
+  if (raw && typeof raw === 'object' && Array.isArray((raw as { items?: EntityRow[] }).items)) {
+    return (raw as { items: EntityRow[] }).items
+  }
+  return []
+}
+
+function mapAggregateSections(detail: EntityRow): RelationSection[] {
+  return relationConfigs.map((config) => ({
+    key: config.key,
+    detailKey: config.detailKey,
+    label: config.label,
+    items: toRelationItems(detail, config.detailKey),
+    error: null
+  }))
+}
+
+async function loadMediaFallback(requestId: number, isCancelled: () => boolean) {
+  const loadedItem = await getMedia(mediaId.value)
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  item.value = loadedItem
+
+  const loadedSocialSummary = await getSocialSummary(`/media/${mediaId.value}`)
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  socialSummary.value = loadedSocialSummary
+
+  const loadedRelationSections = await Promise.all(
+    relationConfigs.map((config) => loadRelation(config.key, config.label))
+  )
+  if (isCancelled() || requestId !== activeRequestId) {
+    return
+  }
+  relationSections.value = loadedRelationSections
+}
+
+async function loadMedia(requestId: number, isCancelled: () => boolean) {
   if (!mediaId.value) {
+    if (requestId === activeRequestId) {
+      item.value = null
+      socialSummary.value = null
+      relationSections.value = []
+      errorMessage.value = null
+      isLoading.value = false
+    }
     return
   }
 
@@ -107,15 +208,31 @@ async function loadMedia() {
   rawHref.value = null
 
   try {
-    item.value = await getMedia(mediaId.value)
-    socialSummary.value = await getSocialSummary(`/media/${mediaId.value}`)
-    relationSections.value = await Promise.all(
-      relationConfigs.map((config) => loadRelation(config.key, config.label))
-    )
+    const detail = (await getMediaDetail(mediaId.value)) as EntityRow
+    if (isCancelled() || requestId !== activeRequestId) {
+      return
+    }
+    item.value = (detail.media as MediaRow | undefined) ?? (detail as MediaRow)
+    socialSummary.value = (detail.social_summary as SocialSummary | null | undefined) ?? null
+    relationSections.value = mapAggregateSections(detail)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Não foi possível carregar mídia.'
+    console.warn(
+      '[MediaDetailView] Failed to load /media/:id/detail; falling back to per-relation requests.',
+      error
+    )
+    try {
+      await loadMediaFallback(requestId, isCancelled)
+    } catch (fallbackError) {
+      if (isCancelled() || requestId !== activeRequestId) {
+        return
+      }
+      errorMessage.value =
+        fallbackError instanceof Error ? fallbackError.message : 'Não foi possível carregar mídia.'
+    }
   } finally {
-    isLoading.value = false
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
   }
 }
 
@@ -142,13 +259,6 @@ async function refreshComments() {
   const comments = await loadRelation('comments', 'Comentários')
   relationSections.value = relationSections.value.map((section) =>
     section.key === 'comments' ? comments : section
-  )
-}
-
-async function refreshReviews() {
-  const reviews = await loadRelation('reviews', 'Avaliações')
-  relationSections.value = relationSections.value.map((section) =>
-    section.key === 'reviews' ? reviews : section
   )
 }
 
@@ -193,30 +303,6 @@ async function deleteRelation(relation: 'favorites' | 'likes') {
   }
 }
 
-async function createReview() {
-  if (!reviewDecision.value.trim() && !reviewComment.value.trim()) {
-    actionErrorMessage.value = 'Preencha a decisão ou comentário da avaliação.'
-    return
-  }
-
-  actionMessage.value = null
-  actionErrorMessage.value = null
-
-  try {
-    await createNested(`/media/${mediaId.value}`, 'reviews', {
-      decision: reviewDecision.value,
-      comment: reviewComment.value.trim() || undefined
-    })
-    reviewDecision.value = 'approve'
-    reviewComment.value = ''
-    actionMessage.value = 'Avaliação registrada.'
-    await refreshReviews()
-  } catch (error) {
-    actionErrorMessage.value =
-      error instanceof Error ? error.message : 'Não foi possível registrar a avaliação.'
-  }
-}
-
 async function prepareDownload() {
   if (!storageId.value || !fileId.value) {
     return
@@ -241,24 +327,56 @@ async function prepareDownload() {
   }
 }
 
-watchEffect(loadMedia)
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
+  })
+
+  void loadMedia(requestId, () => cancelled)
+})
 </script>
 
 <template>
-  <main class="MediaDetailView">
+  <section class="MediaDetailView">
     <RouterLink :to="{ name: 'media-list' }">Voltar para mídia</RouterLink>
 
     <h1>{{ item?.title ?? item?.name ?? 'Mídia' }}</h1>
 
-    <p v-if="isLoading">Carregando mídia...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Carregando mídia..." />
+    <StatusMessage v-else-if="errorMessage" state="error" :message="errorMessage" />
 
-    <EntityCard
-      v-if="item"
-      :item="item"
-      :title-fields="['title', 'name', 'description', 'id']"
-      :detail-fields="['status', 'type', 'original_url', 'references', 'location_id']"
-    />
+    <AppCard v-if="item">
+      <EntityCard
+        :item="item"
+        :title-fields="['title', 'name', 'description', 'id']"
+        :detail-fields="['status', 'type', 'original_url', 'references', 'location_id']"
+      />
+    </AppCard>
+
+    <section v-if="item" class="MediaDetailView-Preview">
+      <h2>Pré-visualização</h2>
+      <video
+        v-if="previewIsVideo"
+        class="MediaDetailView-PreviewMedia"
+        :src="previewUrl"
+        controls
+        preload="metadata"
+      >
+        Seu navegador não suporta vídeo HTML5.
+      </video>
+      <img
+        v-else
+        class="MediaDetailView-PreviewMedia"
+        :src="previewUrl"
+        :alt="String(item.title ?? item.name ?? 'Pré-visualização de mídia')"
+        @error="toFallbackImage"
+      />
+    </section>
 
     <section v-if="item" class="MediaDetailView-Actions">
       <h2>Ações</h2>
@@ -275,15 +393,15 @@ watchEffect(loadMedia)
       >
         Ver local relacionado
       </RouterLink>
-      <button
+      <AppButton
         v-if="auth.isLoggedIn"
         type="button"
         data-cy="media-like"
         @click="socialSummary?.liked ? deleteRelation('likes') : createRelation('likes')"
       >
         {{ socialSummary?.liked ? 'Remover curtida' : 'Curtir' }}
-      </button>
-      <button
+      </AppButton>
+      <AppButton
         v-if="auth.isLoggedIn"
         type="button"
         data-cy="media-favorite"
@@ -292,80 +410,63 @@ watchEffect(loadMedia)
         "
       >
         {{ socialSummary?.favorited ? 'Remover favorito' : 'Favoritar' }}
-      </button>
-      <button
+      </AppButton>
+      <AppButton
         v-if="auth.isLoggedIn && canDownload"
         type="button"
         data-cy="media-download"
         @click="prepareDownload"
       >
         Preparar download
-      </button>
+      </AppButton>
       <a v-if="rawHref" :href="rawHref" target="_blank" rel="noreferrer">Abrir arquivo</a>
       <RouterLink v-if="auth.isLoggedIn" to="/upload/media">Enviar arquivo</RouterLink>
       <RouterLink v-else to="/login">Entre para interagir</RouterLink>
     </section>
 
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
 
     <section v-if="item" class="MediaDetailView-Comments">
       <h2>Novo comentário</h2>
       <form v-if="auth.isLoggedIn" data-cy="media-comment-form" @submit.prevent="createComment">
-        <textarea
-          v-model="commentText"
-          data-cy="media-comment-text"
-          placeholder="Escreva um comentário"
-        />
-        <button type="submit" data-cy="media-comment-submit">Comentar</button>
+        <AppField label="Comentário">
+          <template #default="{ id, required, disabled, ariaInvalid, ariaDescribedby }">
+            <AppTextarea
+              v-model="commentText"
+              :id="id"
+              :required="required"
+              :disabled="disabled"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="media-comment-text"
+              placeholder="Escreva um comentário"
+            />
+          </template>
+        </AppField>
+        <AppButton type="submit" data-cy="media-comment-submit">Comentar</AppButton>
       </form>
       <RouterLink v-else to="/login">Entre para comentar</RouterLink>
     </section>
 
-    <section v-if="item" class="MediaDetailView-Section">
-      <h2>Nova avaliação</h2>
-      <form v-if="auth.isLoggedIn" data-cy="media-review-form" @submit.prevent="createReview">
-        <label>
-          Decisão
-          <select v-model="reviewDecision" data-cy="media-review-decision">
-            <option
-              v-for="decision in reviewDecisions"
-              :key="decision.value"
-              :value="decision.value"
-            >
-              {{ decision.label }}
-            </option>
-          </select>
-        </label>
-        <label>
-          Comentário
-          <textarea
-            v-model="reviewComment"
-            data-cy="media-review-comment"
-            placeholder="Observações da avaliação"
-          />
-        </label>
-        <button type="submit" data-cy="media-review-submit">Registrar avaliação</button>
-      </form>
-      <RouterLink v-else to="/login">Entre para avaliar</RouterLink>
-    </section>
-
-    <section v-for="section in relationSections" :key="section.key" class="MediaDetailView-Section">
+    <section
+      v-for="section in visibleRelationSections"
+      :key="section.key"
+      class="MediaDetailView-Section"
+    >
       <h2>{{ section.label }}</h2>
-      <p v-if="section.error">{{ section.error }}</p>
+      <StatusMessage v-if="section.error" state="error" :message="section.error" />
       <CommentSection
         v-else-if="section.key === 'comments'"
         :parent-path="`/media/${mediaId}`"
         :items="section.items"
         @refresh="refreshComments"
       />
-      <ReviewSection
-        v-else-if="section.key === 'reviews'"
-        :parent-path="`/media/${mediaId}`"
-        :items="section.items"
-        @refresh="refreshReviews"
+      <EmptyState
+        v-else-if="section.items.length === 0"
+        title="Nenhum registro encontrado"
+        description="Não há itens relacionados nesta seção."
       />
-      <p v-else-if="section.items.length === 0">Nenhum registro encontrado.</p>
       <template v-else>
         <RoutableEntitySummaryCard
           v-for="related in section.items"
@@ -375,30 +476,76 @@ watchEffect(loadMedia)
         />
       </template>
     </section>
-  </main>
+
+    <template v-if="mediaResource">
+      <RelationManager
+        v-for="relation in managedAssetRelations"
+        :key="relation.key"
+        :relation="relation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :owner-id="mediaOwnerId"
+        :can-manage="canManageOwnedMediaWrites"
+      />
+
+      <RelationManager
+        v-if="mediaReviewsRelation"
+        :relation="mediaReviewsRelation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :owner-id="mediaOwnerId"
+        :can-manage="canManageOwnedMediaWrites"
+      />
+
+      <RelationManager
+        v-if="mediaAlbumsRelation"
+        :relation="mediaAlbumsRelation"
+        :parent-resource="mediaResource"
+        :parent-id="mediaId"
+        :can-manage="false"
+      />
+    </template>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .MediaDetailView {
   display: grid;
-  gap: 20px;
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-5);
+  padding: var(--space-4);
 
   &-Actions,
+  &-Preview,
   &-Comments,
   &-Section {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   form {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {
     width: 100%;
     min-height: 90px;
+  }
+
+  &-PreviewMedia {
+    width: 100%;
+    max-height: 70vh;
+    border-radius: $radius-md;
+    border: 1px solid var(--color-border);
+    background: var(--color-background-soft);
+    object-fit: contain;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

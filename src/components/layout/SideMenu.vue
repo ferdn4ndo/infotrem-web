@@ -1,142 +1,125 @@
 <script setup lang="ts">
-import { type Ref, ref } from 'vue'
+import { computed } from 'vue'
 import { getAll } from '@/services/menu.service'
-import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store'
 import type { MenuItem } from '~/types/menu-item.type'
-import type { MenuList } from '~/types/meny-list.type'
-import TextInput from '../input/TextInput.vue'
+import { RouterLink } from 'vue-router'
 
-const searchMenuText = ref('')
-const router = useRouter()
-function handleSearchMenuInputChanged() {
-  console.log('search menu text: ' + searchMenuText.value)
-}
+const auth = useAuthStore()
+
+const menuList = computed(() => getAll(auth.isLoggedIn, auth.isStaff, auth.isAdmin))
+
+const emit = defineEmits<{
+  (e: 'navigate'): void
+}>()
 
 function handleMenuItemClicked(item: MenuItem) {
-  console.log('menu item clicked')
-  console.log(item)
-
-  if (item.path !== null) {
-    router.push(item.path)
+  if (item.path) {
+    emit('navigate')
   }
 }
-
-const menuList: Ref<MenuList> = ref([])
-getAll().then((responseItems) => (menuList.value = responseItems))
 </script>
 
 <template>
-  <div class="SideMenu">
-    <div class="SideMenu-SearchContainer">
-      <TextInput
-        v-model="searchMenuText"
-        id="inputSearchMenu"
-        name="inputSearchMenu"
-        placeholder="Procurar no menu..."
-        class="SideMenu-SearchInput"
-        @input.stop="handleSearchMenuInputChanged"
-      />
-    </div>
-
-    <hr class="SideMenu-Divider" />
-
+  <aside class="SideMenu" aria-label="Menu principal">
     <nav class="SideMenu-LinksContainer">
-      <div
-        class="SideMenu-ParentWrapper"
-        v-for="(parentItem, parentKey) in menuList"
-        :key="parentKey"
-      >
-        <a
+      <div class="SideMenu-ParentWrapper" v-for="parentItem in menuList" :key="parentItem.id">
+        <RouterLink
+          v-if="parentItem.path"
           class="SideMenu-ParentLink SideMenu-Link"
-          @click.stop="handleMenuItemClicked(parentItem)"
+          :to="parentItem.path"
           :title="parentItem.title"
+          @click="handleMenuItemClicked(parentItem)"
         >
           <font-awesome-icon :icon="parentItem.icon" />
           {{ parentItem.title }}
-        </a>
+        </RouterLink>
+        <span v-else class="SideMenu-ParentGroup SideMenu-Link" :title="parentItem.title">
+          <font-awesome-icon :icon="parentItem.icon" />
+          {{ parentItem.title }}
+        </span>
 
         <div class="SideMenu-ChildrenWrapper" v-if="parentItem.children !== null">
           <div
             class="SideMenu-ChildWrapper"
-            v-for="(childItem, childKey) in parentItem.children"
-            :key="childKey"
+            v-for="childItem in parentItem.children"
+            :key="childItem.id"
           >
-            <a
+            <RouterLink
+              v-if="childItem.path"
               class="SideMenu-ChildLink SideMenu-Link"
-              @click.stop="handleMenuItemClicked(childItem)"
+              :to="childItem.path"
               :title="childItem.title"
+              @click="handleMenuItemClicked(childItem)"
             >
               <font-awesome-icon :icon="childItem.icon" />
               {{ childItem.title }}
-            </a>
+            </RouterLink>
           </div>
         </div>
       </div>
     </nav>
-  </div>
+  </aside>
 </template>
 
 <style lang="scss" scoped>
 .SideMenu {
   position: fixed;
-  top: 60px;
+  top: var(--header-height);
   left: 0;
-  width: 100vw;
-  height: calc(100vh - 60px);
+  width: min(85vw, 320px);
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
   color: var(--color-heading);
   background-color: var(--color-background-soft);
-  border-bottom: 1px solid var(--color-border);
-  filter: drop-shadow(0px 0 10px var(--color-shadow));
-  z-index: 99;
-
-  @media (min-width: $breakpoint-medium) {
-    width: 300px;
-  }
-
-  &-SearchContainer {
-    padding: 20px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  &-SearchInput {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  &-Divider {
-    height: 1px;
-    border: 0px;
-    border-bottom: 1px solid var(--color-border);
-    margin: 20px 10px;
-  }
+  border-right: 1px solid var(--color-border);
+  box-shadow: 0 0 var(--space-4) var(--color-shadow);
+  z-index: $z-index-d;
 
   &-LinksContainer {
-    padding: 10px 20px;
+    padding: var(--space-4);
   }
 
   &-ParentWrapper {
-    padding: 5px 5px;
+    padding: var(--space-1) 0;
   }
 
   &-ParentLink {
-    font-size: 20px;
+    font-size: var(--font-size-lg);
+    font-weight: $font-weight-bold;
+  }
+
+  &-ParentGroup {
+    font-size: var(--font-size-lg);
+    font-weight: $font-weight-bold;
+    opacity: 0.9;
   }
 
   &-ChildrenWrapper {
-    padding: 5px 5px;
+    padding: var(--space-2) var(--space-4);
   }
 
   &-ChildWrapper {
-    padding: 5px 5px;
+    padding: var(--space-1) 0;
   }
 
   &-ChildLink {
-    font-size: 18px;
+    font-size: var(--font-size-md);
   }
 
   &-Link {
-    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: $radius-md;
+    padding: var(--space-1) var(--space-2);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-border);
+      outline-offset: 2px;
+    }
   }
 }
 </style>

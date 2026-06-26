@@ -5,29 +5,31 @@ import FeedItem from '@/components/feed/FeedItem.vue'
 defineProps<{
   items: FeedMediaItem[]
 }>()
+
+function feedItemKey(item: FeedMediaItem) {
+  return `${item.mediaUrl || 'no-url'}::${item.title || 'untitled'}::${item.source || 'no-source'}`
+}
 </script>
 
 <template>
   <div class="FeedList">
-    <FeedItem v-for="(item, i) in items" :key="i" :media-item="item" class="FeedList-Item" />
+    <FeedItem
+      v-for="item in items"
+      :key="feedItemKey(item)"
+      :media-item="item"
+      class="FeedList-Item"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
-@use '@/styles/variables.scss' as vars;
-
 .FeedList {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
 
   &-Item {
-    flex: 0 0 90%;
-
-    @media (min-width: vars.$breakpoint-large) {
-      flex: 0 0 80vw;
-    }
+    min-width: 0;
   }
 }
 </style>

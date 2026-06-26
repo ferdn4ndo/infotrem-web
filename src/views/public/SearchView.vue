@@ -2,7 +2,13 @@
 import { computed, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { routeForEntityRow } from '@/services/api/entity-routing'
 import * as SearchApi from '@/services/api/search.api'
 
@@ -12,6 +18,7 @@ const query = ref(String(route.query.q ?? ''))
 const items = ref<SearchApi.SearchResultItem[]>([])
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
+let activeRequestId = 0
 
 const trimmedQuery = computed(() => query.value.trim())
 const groupedItems = computed(() => {
@@ -25,26 +32,53 @@ const groupedItems = computed(() => {
   return Array.from(groups, ([label, groupItems]) => ({ label, items: groupItems }))
 })
 
-watchEffect(async () => {
-  const q = String(route.query.q ?? '').trim()
-  query.value = q
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+    if (requestId === activeRequestId) {
+      isLoading.value = false
+    }
+  })
 
-  if (!q) {
-    items.value = []
-    return
-  }
+  void (async () => {
+    const q = String(route.query.q ?? '').trim()
+    query.value = q
 
-  isLoading.value = true
-  errorMessage.value = null
+    if (!q) {
+      items.value = []
+      errorMessage.value = null
+      isLoading.value = false
+      return
+    }
 
-  try {
-    const response = await SearchApi.search(q)
-    items.value = response.items
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Não foi possível buscar.'
-  } finally {
-    isLoading.value = false
-  }
+    isLoading.value = true
+    errorMessage.value = null
+
+    try {
+      const response = await SearchApi.search(q)
+      if (cancelled || requestId !== activeRequestId) {
+        if (requestId === activeRequestId) {
+          isLoading.value = false
+        }
+        return
+      }
+      items.value = response.items
+    } catch (error) {
+      if (cancelled || requestId !== activeRequestId) {
+        if (requestId === activeRequestId) {
+          isLoading.value = false
+        }
+        return
+      }
+      errorMessage.value = error instanceof Error ? error.message : 'Não foi possível buscar.'
+    } finally {
+      if (requestId === activeRequestId) {
+        isLoading.value = false
+      }
+    }
+  })()
 })
 
 function submitSearch() {
@@ -57,71 +91,92 @@ function labelFor(item: SearchApi.SearchResultItem) {
 </script>
 
 <template>
-  <main class="SearchView">
+  <section class="SearchView">
     <h1>Busca</h1>
 
     <form class="SearchView-Form" data-cy="search-form" @submit.prevent="submitSearch">
-      <input
-        v-model="query"
-        class="SearchView-Input"
-        data-cy="search-input"
-        placeholder="Busque por locais, material rodante, mídia..."
-      />
-      <button class="SearchView-Button" data-cy="search-submit" type="submit">Buscar</button>
+      <AppField class="SearchView-InputField" label="Busca">
+        <template #default="{ id }">
+          <AppInput
+            :id="id"
+            v-model="query"
+            class="SearchView-Input"
+            data-cy="search-input"
+            placeholder="Busque por locais, material rodante, mídia..."
+            type="search"
+          />
+        </template>
+      </AppField>
+      <AppButton class="SearchView-Button" data-cy="search-submit" type="submit">Buscar</AppButton>
     </form>
 
-    <p v-if="isLoading">Buscando...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
-    <p v-else-if="route.query.q && items.length === 0">Nenhum resultado encontrado.</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Buscando..." />
+    <StatusMessage v-else-if="errorMessage" state="error" :message="errorMessage" />
+    <EmptyState
+      v-else-if="route.query.q && items.length === 0"
+      title="Nenhum resultado encontrado"
+      description="Tente ajustar os termos da busca."
+    />
 
-    <section class="SearchView-Results">
+    <section v-if="groupedItems.length > 0" class="SearchView-Results">
       <section v-for="group in groupedItems" :key="group.label" class="SearchView-Group">
         <h2>{{ group.label }}</h2>
-        <RoutableEntitySummaryCard
+        <AppCard
           v-for="item in group.items"
           :key="`${item.entity_type}-${item.id}`"
           class="SearchView-Result"
           data-cy="search-result"
-          :item="item"
-          :title-fields="['title', 'name', 'code', 'number', 'id']"
-        />
+        >
+          <RoutableEntitySummaryCard
+            :item="item"
+            :title-fields="['title', 'name', 'code', 'number', 'id']"
+          />
+        </AppCard>
       </section>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .SearchView {
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4);
 
   &-Form {
     display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+
+  &-InputField {
+    flex: 1 1 auto;
   }
 
   &-Input {
-    flex: 1 1 auto;
-    padding: 10px;
+    min-width: 240px;
   }
 
   &-Button {
-    padding: 10px 16px;
+    min-width: 120px;
   }
 
   &-Results {
     display: grid;
-    gap: 24px;
+    gap: var(--space-5);
   }
 
   &-Group {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   &-Result {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
     color: inherit;
     text-decoration: none;
   }
@@ -129,6 +184,14 @@ function labelFor(item: SearchApi.SearchResultItem) {
   &-Type,
   &-Reason {
     display: block;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
+
+    &-Form {
+      flex-direction: column;
+    }
   }
 }
 </style>

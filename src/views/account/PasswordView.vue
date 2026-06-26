@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import * as AuthApi from '@/services/api/auth.api'
 
 const currentPassword = ref('')
@@ -29,32 +34,61 @@ async function submitPasswordChange() {
 </script>
 
 <template>
-  <main class="PasswordView">
+  <section class="PasswordView">
     <h1>Alterar senha</h1>
-    <form class="PasswordView-Form" @submit.prevent="submitPasswordChange">
-      <label>
-        Senha atual
-        <input v-model="currentPassword" type="password" autocomplete="current-password" required />
-      </label>
-      <label>
-        Nova senha
-        <input v-model="newPassword" type="password" autocomplete="new-password" required />
-      </label>
-      <button type="submit">Salvar</button>
-      <p v-if="message">{{ message }}</p>
-      <p v-if="errorMessage">{{ errorMessage }}</p>
-    </form>
-  </main>
+    <AppCard>
+      <form class="PasswordView-Form" @submit.prevent="submitPasswordChange">
+        <AppField label="Senha atual" required>
+          <template #default="{ id, required, ariaInvalid, ariaDescribedby }">
+            <AppInput
+              v-model="currentPassword"
+              :id="id"
+              type="password"
+              autocomplete="current-password"
+              :required="required"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="password-current"
+            />
+          </template>
+        </AppField>
+        <AppField label="Nova senha" required>
+          <template #default="{ id, required, ariaInvalid, ariaDescribedby }">
+            <AppInput
+              v-model="newPassword"
+              :id="id"
+              type="password"
+              autocomplete="new-password"
+              :required="required"
+              :aria-invalid="ariaInvalid"
+              :aria-describedby="ariaDescribedby"
+              data-cy="password-new"
+            />
+          </template>
+        </AppField>
+        <AppButton type="submit" data-cy="password-submit">Salvar</AppButton>
+        <StatusMessage v-if="message" state="empty" :message="message" />
+        <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
+      </form>
+    </AppCard>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .PasswordView {
-  padding: 24px;
+  width: 100%;
+  max-width: $breakpoint-medium;
+  margin: 0 auto;
+  padding: var(--space-4);
 
   &-Form {
     display: grid;
-    gap: 12px;
-    max-width: 420px;
+    gap: var(--space-3);
+    max-width: min(100%, $breakpoint-small);
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

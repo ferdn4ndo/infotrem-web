@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import FeedView from '../views/FeedView.vue'
 import { findResource } from '@/services/api/resources'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -10,12 +8,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: () => import('@/views/HomeView.vue')
     },
     {
       path: '/feed',
       name: 'feed',
-      component: FeedView
+      component: () => import('@/views/FeedView.vue')
     },
     {
       path: '/login',
@@ -99,9 +97,57 @@ const router = createRouter({
       component: () => import('@/views/public/ResourceListView.vue')
     },
     {
+      path: '/companies/:id',
+      name: 'company-detail',
+      component: () => import('@/views/public/CompanyDetailView.vue')
+    },
+    {
+      path: '/locations/:id',
+      name: 'location-detail',
+      component: () => import('@/views/public/LocationDetailView.vue')
+    },
+    {
+      path: '/rolling-stock/:id',
+      name: 'rolling-stock-detail',
+      component: () => import('@/views/public/RollingStockDetailView.vue')
+    },
+    {
+      path: '/routes/:id',
+      name: 'route-detail',
+      component: () => import('@/views/public/RouteDetailView.vue')
+    },
+    {
       path: '/resources/:resource/:id',
       name: 'resource-detail',
-      component: () => import('@/views/public/ResourceDetailView.vue')
+      component: () => import('@/views/public/ResourceDetailView.vue'),
+      beforeEnter: (to) => {
+        const resource = String(to.params.resource ?? '')
+        const id = String(to.params.id ?? '')
+
+        if (resource === 'media') {
+          return { name: 'media-detail', params: { id } }
+        }
+
+        if (resource === 'albums') {
+          return { name: 'album-detail', params: { id } }
+        }
+
+        if (resource === 'companies') {
+          return { name: 'company-detail', params: { id } }
+        }
+
+        if (resource === 'locations') {
+          return { name: 'location-detail', params: { id } }
+        }
+
+        if (resource === 'rolling-stock') {
+          return { name: 'rolling-stock-detail', params: { id } }
+        }
+
+        if (resource === 'routes') {
+          return { name: 'route-detail', params: { id } }
+        }
+      }
     },
     {
       path: '/routes/:routeId/sections/:sectionId',
@@ -112,6 +158,12 @@ const router = createRouter({
       path: '/admin/resources/:resource',
       name: 'admin-resource',
       component: () => import('@/views/admin/AdminResourceView.vue'),
+      meta: { requiresStaff: true }
+    },
+    {
+      path: '/admin/review-moderation',
+      name: 'admin-review-moderation',
+      component: () => import('@/views/admin/ReviewModerationView.vue'),
       meta: { requiresStaff: true }
     },
     {

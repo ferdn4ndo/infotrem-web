@@ -42,53 +42,50 @@ function displayDate(inputDate: string | null) {
 
 <style lang="scss" scoped>
 .MediaBasicInfoTable {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: grid;
+  gap: var(--space-1);
 
   &-DataList {
     margin: 0;
     padding: 0;
-    display: flex;
-    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    gap: var(--space-1);
+
+    @media (max-width: $breakpoint-small) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &-DataListTitle {
-    margin: 2px;
-    padding: 10px 5px;
+    margin: 0;
+    padding: var(--space-2) var(--space-2);
     font-weight: bold;
     background-color: var(--color-background-mute);
-    width: 25vw;
     text-align: right;
 
     &::after {
       content: ':';
     }
 
-    @media (min-width: $breakpoint-large) {
-      // flex: 0 0 100%;
-      max-width: 100px;
-      width: 12vw;
+    @media (max-width: $breakpoint-small) {
+      text-align: left;
     }
   }
 
   &-DataListText {
-    margin: 2px;
-    padding: 10px 5px;
+    margin: 0;
+    padding: var(--space-2) var(--space-2);
     background-color: var(--color-background-mute);
-    flex: 1 1 auto;
-    width: 100%;
-
-    @media (min-width: $breakpoint-large) {
-      width: 100%;
-    }
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   &-DataHeader {
     font-weight: bold;
     background-color: var(--color-background-mute);
-    margin: 2px;
-    flex: 1 1 100%;
+    margin: 0;
+    padding: var(--space-2) var(--space-2);
     text-align: center;
   }
 

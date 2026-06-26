@@ -1,13 +1,28 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import AppField from '@/components/common/AppField.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import AppSelect from '@/components/common/AppSelect.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
+import { listResource } from '@/services/api/resources.api'
+import { listNested } from '@/services/api/social.api'
 import { useAuthStore } from '@/stores/auth.store'
 import type { ProfileUpdatePayload } from '@/types/domain/user.type'
+import type { EntityRow } from '@/types/domain/common.type'
 
 const auth = useAuthStore()
 const message = ref<string | null>(null)
+const errorMessage = ref<string | null>(null)
 const form = ref<Partial<ProfileUpdatePayload>>({})
+const states = ref<EntityRow[]>([])
+const cities = ref<EntityRow[]>([])
+const isLoadingLookups = ref(false)
+let isHydrating = true
 
 const profileFields: Array<keyof ProfileUpdatePayload> = [
   'name',
@@ -17,73 +32,224 @@ const profileFields: Array<keyof ProfileUpdatePayload> = [
   'number',
   'complement',
   'zipcode',
-  'phone',
-  'city_id',
-  'state_id'
+  'phone'
 ]
+
+const profileFieldLabels: Record<keyof ProfileUpdatePayload, string> = {
+  name: 'Nome',
+  cpf: 'CPF',
+  birth_date: 'Data de nascimento',
+  address: 'Endereco',
+  number: 'Numero',
+  complement: 'Complemento',
+  zipcode: 'CEP',
+  phone: 'Telefone',
+  state_id: 'Estado',
+  city_id: 'Cidade'
+}
+
+function profileFieldLabel(field: keyof ProfileUpdatePayload) {
+  return profileFieldLabels[field] ?? String(field)
+}
+
+function stringField(row: EntityRow, key: string) {
+  const value = row[key]
+  return value === null || value === undefined || value === '' ? null : String(value)
+}
+
+function stateLabel(state: EntityRow) {
+  return (
+    stringField(state, 'name') ??
+    stringField(state, 'abbrev') ??
+    stringField(state, 'ibge_id') ??
+    stringField(state, 'id') ??
+    'Estado'
+  )
+}
+
+function cityLabel(city: EntityRow) {
+  return (
+    stringField(city, 'name') ??
+    stringField(city, 'abbrev') ??
+    stringField(city, 'ibge_id') ??
+    stringField(city, 'id') ??
+    'Cidade'
+  )
+}
 
 function hydrateForm() {
   form.value = Object.fromEntries(
-    profileFields.map((field) => [field, auth.user?.[field] ? String(auth.user[field]) : ''])
+    [...profileFields, 'city_id', 'state_id'].map((field) => [
+      field,
+      auth.user?.[field] ? String(auth.user[field]) : ''
+    ])
   ) as Partial<ProfileUpdatePayload>
+}
+
+async function loadStates() {
+  try {
+    const response = await listResource('/states', { limit: 500 })
+    states.value = response.items
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível carregar os estados.'
+    throw error
+  }
+}
+
+async function loadCitiesForState(stateId: string) {
+  if (!stateId) {
+    cities.value = []
+    return
+  }
+
+  try {
+    const response = await listNested(`/states/${stateId}`, 'cities')
+    cities.value = response.items
+  } catch (error) {
+    cities.value = []
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível carregar as cidades do estado.'
+  }
 }
 
 async function saveProfile() {
   message.value = null
+  errorMessage.value = null
   const payload = Object.fromEntries(
     Object.entries(form.value).filter(([, value]) => value !== undefined)
   ) as Partial<ProfileUpdatePayload>
 
-  await auth.updateProfile(payload)
-  hydrateForm()
-  message.value = 'Perfil atualizado.'
+  try {
+    await auth.updateProfile(payload)
+    hydrateForm()
+    message.value = 'Perfil atualizado.'
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.'
+  }
 }
 
 async function resendEmailValidation() {
   message.value = null
-  const response = await auth.resendEmailValidation()
-  message.value = String(response.message ?? 'E-mail de validação reenviado.')
+  errorMessage.value = null
+  try {
+    const response = await auth.resendEmailValidation()
+    message.value = String(response.message ?? 'E-mail de validação reenviado.')
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível reenviar a validação.'
+  }
 }
 
 onMounted(async () => {
   await auth.refreshMe()
   hydrateForm()
+  isLoadingLookups.value = true
+  await loadStates().catch(() => {})
+  await loadCitiesForState(String(form.value.state_id ?? '')).catch((error) => {
+    errorMessage.value =
+      error instanceof Error
+        ? error.message
+        : 'Não foi possível carregar estados e cidades para o perfil.'
+  })
+  isLoadingLookups.value = false
+  isHydrating = false
 })
+
+watch(
+  () => String(form.value.state_id ?? ''),
+  async (nextStateId, previousStateId) => {
+    if (isHydrating || nextStateId === previousStateId) {
+      return
+    }
+
+    isLoadingLookups.value = true
+    try {
+      await loadCitiesForState(nextStateId)
+      if (
+        !cities.value.find((city) => stringField(city, 'id') === String(form.value.city_id ?? ''))
+      ) {
+        form.value.city_id = ''
+      }
+    } finally {
+      isLoadingLookups.value = false
+    }
+  }
+)
 </script>
 
 <template>
-  <main class="ProfileView">
+  <section class="ProfileView">
     <h1>Meu Perfil</h1>
-    <p v-if="auth.isLoading">Carregando...</p>
-    <p v-else-if="auth.errorMessage">{{ auth.errorMessage }}</p>
-    <EntityCard
-      v-else-if="auth.user"
-      :item="auth.user"
-      :title-fields="['name', 'username', 'email']"
+    <StatusMessage v-if="auth.isLoading" state="loading" message="Carregando perfil..." />
+    <StatusMessage v-else-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
+    <EmptyState
+      v-else-if="!auth.user"
+      title="Perfil indisponível"
+      description="Não foi possível carregar os dados da sua conta."
     />
-    <p v-if="message">{{ message }}</p>
+    <AppCard v-else>
+      <EntityCard :item="auth.user" :title-fields="['name', 'username', 'email']" />
+    </AppCard>
+    <StatusMessage v-if="message" state="empty" :message="message" />
+    <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
+    <StatusMessage
+      v-if="isLoadingLookups"
+      state="loading"
+      message="Carregando estados e cidades..."
+    />
 
     <form v-if="auth.user" class="ProfileView-Form" @submit.prevent="saveProfile">
-      <label v-for="field in profileFields" :key="field">
-        {{ field }}
-        <input v-model="form[field]" />
-      </label>
-      <button type="submit" :disabled="auth.isLoading">Salvar perfil</button>
-      <button type="button" :disabled="auth.isLoading" @click="resendEmailValidation">
+      <AppField v-for="field in profileFields" :key="field" :label="profileFieldLabel(field)">
+        <template #default="{ id }">
+          <AppInput :id="id" v-model="form[field]" />
+        </template>
+      </AppField>
+      <AppField label="Estado">
+        <template #default="{ id }">
+          <AppSelect :id="id" v-model="form.state_id">
+            <option value="">Selecione um estado</option>
+            <option v-for="state in states" :key="String(state.id)" :value="String(state.id)">
+              {{ stateLabel(state) }}
+            </option>
+          </AppSelect>
+        </template>
+      </AppField>
+      <AppField label="Cidade">
+        <template #default="{ id }">
+          <AppSelect :id="id" v-model="form.city_id" :disabled="!form.state_id">
+            <option value="">Selecione uma cidade</option>
+            <option v-for="city in cities" :key="String(city.id)" :value="String(city.id)">
+              {{ cityLabel(city) }}
+            </option>
+          </AppSelect>
+        </template>
+      </AppField>
+      <AppButton type="submit" :disabled="auth.isLoading">Salvar perfil</AppButton>
+      <AppButton type="button" :disabled="auth.isLoading" @click="resendEmailValidation">
         Reenviar validação de e-mail
-      </button>
+      </AppButton>
     </form>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .ProfileView {
-  padding: 24px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-4);
 
   &-Form {
     display: grid;
-    gap: 12px;
-    margin-top: 24px;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    max-width: 560px;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

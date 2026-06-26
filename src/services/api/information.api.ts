@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/http/api-client'
 import type { PaginatedResponse } from '@/types/api/pagination.type'
 import type { EntityRow } from '@/types/domain/common.type'
+import { getInformationSummary } from '@/services/api/summary.api'
 
 export type InformationEffectPayload = {
   field_name: string
@@ -29,4 +30,8 @@ export function createInformationVote(
   value: InformationVotePayload['value']
 ) {
   return apiClient.post<EntityRow>(`/information/${informationId}/votes`, { value })
+}
+
+export function getInformationSummaryRead(informationId: string) {
+  return getInformationSummary(informationId)
 }

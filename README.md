@@ -35,21 +35,23 @@ yarn test:e2e:dev
   staff/admin routes.
 - `src/services/http/` contains the shared API client, errors, and pagination
   helpers.
-- `src/services/api/` contains backend-backed feature services.
+- `src/services/api/` contains backend-backed feature services, permissions, and
+  the resource registry.
 - `src/stores/auth.store.ts` owns token persistence, `/me` hydration, and
   account mutations.
-- `src/components/` contains layout, input, feed, table, and starter Vue components.
+- `src/components/` contains layout, common primitives, input helpers, feed, and
+  table components.
 - `src/styles/` defines global CSS variables, breakpoints, and shared SCSS variables.
-- `cypress/` contains the Cypress e2e scaffold.
+- `cypress/` contains Cypress e2e specs and support code.
 - `docs/` contains deeper project notes for humans and agents.
 
 ## Documentation
 
-- `AGENTS.md` documents repo-specific guidance for AI/code agents.
-- `docs/architecture.md` describes the runtime architecture and source layout.
-- `docs/backend-integration.md` describes the planned API client, auth, routing, and service integration strategy.
-- `docs/development.md` covers local setup, conventions, and coding notes.
-- `docs/testing-and-ci.md` covers tests, linting, CI, and current verification caveats.
+- [`AGENTS.md`](./AGENTS.md) documents repo-specific guidance for AI/code agents.
+- [`docs/architecture.md`](./docs/architecture.md) describes the runtime architecture and source layout.
+- [`docs/backend-integration.md`](./docs/backend-integration.md) documents the current API integration and endpoint usage.
+- [`docs/development.md`](./docs/development.md) covers local setup, conventions, and coding notes.
+- [`docs/testing-and-ci.md`](./docs/testing-and-ci.md) covers tests, linting, CI, and current verification caveats.
 
 ## Tooling Notes
 

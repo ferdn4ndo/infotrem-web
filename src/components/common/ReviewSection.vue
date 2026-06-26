@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
 import {
   isReviewDecision,
   reviewDecisionLabel,
@@ -8,6 +9,8 @@ import {
   type ReviewDecision
 } from '@/services/api/review-decisions'
 import { deleteNested, updateNested } from '@/services/api/social.api'
+import EmptyState from '@/components/common/EmptyState.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import type { EntityRow } from '@/types/domain/common.type'
 
@@ -106,6 +109,25 @@ async function saveReview(row: EntityRow) {
   }
 }
 
+async function decideReview(row: EntityRow, decision: ReviewDecision) {
+  const id = stringField(row, 'id')
+  if (!id) {
+    return
+  }
+
+  actionMessage.value = null
+  actionErrorMessage.value = null
+
+  try {
+    await updateNested(props.parentPath, 'reviews', id, { decision })
+    actionMessage.value = `Avaliação marcada como ${reviewDecisionLabel(decision).toLowerCase()}.`
+    emit('refresh')
+  } catch (error) {
+    actionErrorMessage.value =
+      error instanceof Error ? error.message : 'Não foi possível registrar a decisão da avaliação.'
+  }
+}
+
 async function deleteReview(row: EntityRow) {
   const id = stringField(row, 'id')
   if (!id) {
@@ -128,10 +150,13 @@ async function deleteReview(row: EntityRow) {
 
 <template>
   <div class="ReviewSection">
-    <p v-if="actionMessage">{{ actionMessage }}</p>
-    <p v-if="actionErrorMessage">{{ actionErrorMessage }}</p>
-
-    <p v-if="items.length === 0">Nenhuma avaliação encontrada.</p>
+    <StatusMessage v-if="actionMessage" state="empty" :message="actionMessage" />
+    <StatusMessage v-if="actionErrorMessage" state="error" :message="actionErrorMessage" />
+    <EmptyState
+      v-if="items.length === 0"
+      title="Nenhuma avaliação encontrada"
+      description="Ainda não há avaliações para este item."
+    />
 
     <article
       v-for="review in items"
@@ -148,8 +173,42 @@ async function deleteReview(row: EntityRow) {
       </p>
 
       <div v-if="canManage(review)" class="ReviewSection-Actions">
-        <button type="button" data-cy="review-edit" @click="startEdit(review)">Editar</button>
-        <button type="button" data-cy="review-delete" @click="deleteReview(review)">Remover</button>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-approve"
+          @click="decideReview(review, 'approve')"
+        >
+          Aprovar
+        </AppButton>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-reject"
+          @click="decideReview(review, 'reject')"
+        >
+          Rejeitar
+        </AppButton>
+        <AppButton
+          v-if="auth.isStaff || auth.isAdmin"
+          type="button"
+          variant="ghost"
+          data-cy="review-needs-changes"
+          @click="decideReview(review, 'needs_changes')"
+        >
+          Pedir ajustes
+        </AppButton>
+        <AppButton type="button" data-cy="review-edit" @click="startEdit(review)">Editar</AppButton>
+        <AppButton
+          type="button"
+          data-cy="review-delete"
+          variant="danger"
+          @click="deleteReview(review)"
+        >
+          Remover
+        </AppButton>
       </div>
 
       <form
@@ -179,8 +238,8 @@ async function deleteReview(row: EntityRow) {
             data-cy="review-comment"
           />
         </label>
-        <button type="submit" data-cy="review-submit">Salvar avaliação</button>
-        <button type="button" @click="cancelEdit(review)">Cancelar</button>
+        <AppButton type="submit" data-cy="review-submit">Salvar avaliação</AppButton>
+        <AppButton type="button" variant="ghost" @click="cancelEdit(review)">Cancelar</AppButton>
       </form>
     </article>
   </div>
@@ -189,31 +248,31 @@ async function deleteReview(row: EntityRow) {
 <style scoped lang="scss">
 .ReviewSection {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 
   &-Item {
     display: grid;
-    gap: 10px;
+    gap: var(--space-2);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: $radius-md;
     background: var(--color-background-soft);
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   &-Meta {
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 
   &-Actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   form {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   textarea {

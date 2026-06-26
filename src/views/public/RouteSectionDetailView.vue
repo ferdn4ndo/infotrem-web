@@ -2,11 +2,18 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AppCard from '@/components/common/AppCard.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import RelationManager from '@/components/common/RelationManager.vue'
 import RoutableEntitySummaryCard from '@/components/common/RoutableEntitySummaryCard.vue'
 import RouteSectionLocationSummaryCard from '@/components/common/RouteSectionLocationSummaryCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
+import { type ResourceConfig } from '@/services/api/resources'
+import { useAuthStore } from '@/stores/auth.store'
 import { getResource } from '@/services/api/resources.api'
 import { listNested } from '@/services/api/social.api'
+import { getRouteTree } from '@/services/api/summary.api'
 import type { EntityRow } from '@/types/domain/common.type'
 
 type RelationSection = {
@@ -18,15 +25,36 @@ type RelationSection = {
 }
 
 const route = useRoute()
+const auth = useAuthStore()
 const item = ref<EntityRow | null>(null)
 const relationSections = ref<RelationSection[]>([])
 const kilometersByLocationId = ref<Record<string, EntityRow[]>>({})
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
+let activeRequestId = 0
 
 const routeId = computed(() => String(route.params.routeId ?? ''))
 const sectionId = computed(() => String(route.params.sectionId ?? ''))
 const parentPath = computed(() => `/routes/${routeId.value}/sections/${sectionId.value}`)
+const sectionResource = computed<ResourceConfig>(() => ({
+  key: 'route-section',
+  label: 'Seções',
+  path: `/routes/${routeId.value}/sections`,
+  access: 'staff',
+  primaryFields: ['name', 'status', 'id'],
+  writeFields: ['name', 'status']
+}))
+const sectionLocationResource = computed<ResourceConfig>(() => ({
+  key: 'route-section-location',
+  label: 'Locais da seção',
+  path: `${parentPath.value}/locations`,
+  access: 'staff',
+  primaryFields: ['location_id', 'location_route_order', 'id'],
+  writeFields: ['location_id', 'location_route_order']
+}))
+const sectionLocations = computed(
+  () => relationSections.value.find((section) => section.key === 'locations')?.items ?? []
+)
 
 const relationConfigs = [
   {
@@ -76,50 +104,114 @@ async function loadKilometers(locations: EntityRow[]) {
           'kilometers'
         )
         return [locationId, response.items] as const
-      } catch {
+      } catch (error) {
+        console.warn(
+          '[RouteSectionDetailView] Failed to load location kilometers; using empty fallback.',
+          error
+        )
         return [locationId, []] as const
       }
     })
   )
 
-  kilometersByLocationId.value = Object.fromEntries(entries.filter((entry) => entry !== null))
+  return Object.fromEntries(entries.filter((entry) => entry !== null))
 }
 
-watchEffect(async () => {
-  if (!routeId.value || !sectionId.value) {
-    return
-  }
+watchEffect((onCleanup) => {
+  const requestId = ++activeRequestId
+  let cancelled = false
+  onCleanup(() => {
+    cancelled = true
+  })
 
-  isLoading.value = true
-  errorMessage.value = null
-  kilometersByLocationId.value = {}
+  void (async () => {
+    if (!routeId.value || !sectionId.value) {
+      return
+    }
 
-  try {
-    item.value = await getResource(`/routes/${routeId.value}/sections`, sectionId.value)
-    relationSections.value = await Promise.all(relationConfigs.map(loadRelation))
-    const locations =
-      relationSections.value.find((section) => section.key === 'locations')?.items ?? []
-    await loadKilometers(locations)
-  } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : 'Não foi possível carregar a seção da rota.'
-  } finally {
-    isLoading.value = false
-  }
+    isLoading.value = true
+    errorMessage.value = null
+    kilometersByLocationId.value = {}
+
+    try {
+      const loadedItem = await getResource(`/routes/${routeId.value}/sections`, sectionId.value)
+      if (cancelled || requestId !== activeRequestId) {
+        return
+      }
+      item.value = loadedItem
+      const nestedSections = await Promise.all(relationConfigs.map(loadRelation))
+      if (cancelled || requestId !== activeRequestId) {
+        return
+      }
+      relationSections.value = nestedSections
+
+      try {
+        const routeTree = await getRouteTree(routeId.value)
+        const routeSections = (
+          Array.isArray(routeTree.sections) ? routeTree.sections : []
+        ) as EntityRow[]
+        const targetSection = routeSections.find(
+          (section) => String(section.id) === sectionId.value
+        )
+        if (targetSection) {
+          const treeLocations = (
+            Array.isArray(targetSection.locations) ? targetSection.locations : []
+          ) as EntityRow[]
+          const treePaths = (
+            Array.isArray(targetSection.paths) ? targetSection.paths : []
+          ) as EntityRow[]
+          relationSections.value = relationSections.value.map((section) => {
+            if (section.key === 'locations' && treeLocations.length > 0) {
+              return { ...section, items: treeLocations, error: null }
+            }
+            if (section.key === 'paths' && treePaths.length > 0) {
+              return { ...section, items: treePaths, error: null }
+            }
+            return section
+          })
+        }
+      } catch (error) {
+        console.warn(
+          '[RouteSectionDetailView] Failed to load /routes/:id/tree; keeping nested fallback.',
+          error
+        )
+      }
+
+      const locations =
+        relationSections.value.find((section) => section.key === 'locations')?.items ?? []
+      const kilometers = await loadKilometers(locations)
+      if (cancelled || requestId !== activeRequestId) {
+        return
+      }
+      kilometersByLocationId.value = kilometers
+    } catch (error) {
+      if (cancelled || requestId !== activeRequestId) {
+        return
+      }
+      errorMessage.value =
+        error instanceof Error ? error.message : 'Não foi possível carregar a seção da rota.'
+    } finally {
+      if (!cancelled && requestId === activeRequestId) {
+        isLoading.value = false
+      }
+    }
+  })()
 })
 </script>
 
 <template>
-  <main class="RouteSectionDetailView">
+  <section class="RouteSectionDetailView">
     <RouterLink :to="{ name: 'resource-detail', params: { resource: 'routes', id: routeId } }">
       Voltar para rota
     </RouterLink>
 
     <h1>Seção da rota</h1>
-    <p v-if="isLoading">Carregando seção...</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="isLoading" state="loading" message="Carregando seção..." />
+    <StatusMessage v-else-if="errorMessage" state="error" :message="errorMessage" />
 
-    <EntityCard v-if="item" :item="item" :title-fields="['name', 'status', 'id']" />
+    <AppCard v-if="item">
+      <EntityCard :item="item" :title-fields="['name', 'status', 'id']" />
+    </AppCard>
 
     <section
       v-for="section in relationSections"
@@ -127,8 +219,12 @@ watchEffect(async () => {
       class="RouteSectionDetailView-Section"
     >
       <h2>{{ section.label }}</h2>
-      <p v-if="section.error">{{ section.error }}</p>
-      <p v-else-if="section.items.length === 0">Nenhum registro encontrado.</p>
+      <StatusMessage v-if="section.error" state="error" :message="section.error" />
+      <EmptyState
+        v-else-if="section.items.length === 0"
+        title="Nenhum registro encontrado"
+        description="Não há itens relacionados nesta seção."
+      />
       <template v-else>
         <article
           v-for="related in section.items"
@@ -144,20 +240,85 @@ watchEffect(async () => {
         </article>
       </template>
     </section>
-  </main>
+
+    <section v-if="auth.isStaff" class="RouteSectionDetailView-Section">
+      <h2>Gerenciar relações da seção</h2>
+      <RelationManager
+        :relation="{
+          key: 'locations',
+          label: 'Locais da seção',
+          pathSuffix: 'locations',
+          parentParam: 'section_id',
+          access: 'staff',
+          primaryFields: ['location_id', 'location_route_order', 'id'],
+          writeFields: ['location_id', 'location_route_order']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <RelationManager
+        :relation="{
+          key: 'paths',
+          label: 'Linhas da seção',
+          pathSuffix: 'paths',
+          parentParam: 'section_id',
+          access: 'staff',
+          primaryFields: ['path_id', 'id'],
+          writeFields: ['path_id']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <RelationManager
+        :relation="{
+          key: 'information',
+          label: 'Informações',
+          pathSuffix: 'information',
+          parentParam: 'section_id',
+          access: 'public',
+          primaryFields: ['title', 'content', 'status', 'id'],
+          writeFields: ['information_id']
+        }"
+        :parent-resource="sectionResource"
+        :parent-id="sectionId"
+      />
+      <section v-for="location in sectionLocations" :key="String(location.id)">
+        <RelationManager
+          :relation="{
+            key: 'kilometers',
+            label: `Marcos quilométricos do local ${location.location_id ?? location.id}`,
+            pathSuffix: 'kilometers',
+            parentParam: 'section_location_id',
+            access: 'staff',
+            primaryFields: ['kilometer', 'is_reference', 'id'],
+            writeFields: ['kilometer', 'is_reference']
+          }"
+          :parent-resource="sectionLocationResource"
+          :parent-id="String(location.id)"
+        />
+      </section>
+    </section>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .RouteSectionDetailView {
   display: grid;
-  gap: 20px;
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-5);
+  padding: var(--space-4);
 
   &-Section,
   &-Card,
   &-Kilometers {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

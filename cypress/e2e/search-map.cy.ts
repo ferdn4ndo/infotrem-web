@@ -31,7 +31,7 @@ describe('search and map smoke', () => {
       cy.wait('@map')
       cy.contains('1 de 1 resultados')
       cy.get('[data-cy="map-result"]').should('contain', 'Pátio Central')
-      cy.get('[data-cy="map-submit"]').click()
+      cy.get('.leaflet-control-zoom-in').click()
       cy.wait('@map')
     })
   })

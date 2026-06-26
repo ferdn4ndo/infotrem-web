@@ -11,6 +11,6 @@ export type SearchResult = {
   items: SearchResultItem[]
 }
 
-export function search(q: string, limit = 30) {
-  return apiClient.get<SearchResult>('/search', { query: { q, limit } })
+export function search(q: string, limit = 30, options: { signal?: AbortSignal } = {}) {
+  return apiClient.get<SearchResult>('/search', { query: { q, limit }, signal: options.signal })
 }

@@ -27,10 +27,10 @@ function field(row: EntityRow, name: string) {
 <style scoped lang="scss">
 .PathPointSummaryCard {
   display: grid;
-  gap: 6px;
+  gap: var(--space-2);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: $radius-md;
   background: var(--color-background-soft);
-  padding: 12px;
+  padding: var(--space-3);
 }
 </style>

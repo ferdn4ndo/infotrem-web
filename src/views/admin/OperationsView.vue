@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import EntityCard from '@/components/common/EntityCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import * as OperationsApi from '@/services/api/operations.api'
 import type { EntityRow } from '@/types/domain/common.type'
 
@@ -22,22 +26,32 @@ async function loadHealth() {
     isLoading.value = false
   }
 }
+
+onMounted(loadHealth)
 </script>
 
 <template>
-  <main class="OperationsView">
+  <section class="OperationsView">
     <h1>Operações</h1>
     <p>
       Superfície administrativa para endpoints operacionais seguros expostos pelo backend. Rotinas
       internas como cronjobs ficam fora da UI.
     </p>
 
-    <p v-if="errorMessage">{{ errorMessage }}</p>
+    <StatusMessage v-if="errorMessage" state="error" :message="errorMessage" />
 
     <section class="OperationsView-Section">
       <h2>Saúde da API</h2>
-      <button type="button" :disabled="isLoading" @click="loadHealth">Consultar saúde</button>
-      <EntityCard v-if="health" :item="health" :title-fields="['status', 'ok', 'message']" />
+      <AppButton type="button" :disabled="isLoading" @click="loadHealth">Consultar saúde</AppButton>
+      <StatusMessage v-if="isLoading" state="loading" message="Consultando saúde da API..." />
+      <EmptyState
+        v-else-if="!health"
+        title="Sem dados de saúde"
+        description="Use o botão para atualizar o status da API."
+      />
+      <AppCard v-else>
+        <EntityCard :item="health" :title-fields="['status', 'ok', 'message']" />
+      </AppCard>
     </section>
 
     <section class="OperationsView-Section">
@@ -52,18 +66,26 @@ async function loadHealth() {
         {{ link.label }}
       </a>
     </section>
-  </main>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .OperationsView {
   display: grid;
-  gap: 20px;
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-5);
+  padding: var(--space-4);
 
   &-Section {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
+    max-width: 720px;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>

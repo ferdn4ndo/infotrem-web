@@ -30,6 +30,17 @@ export function createViteConfig(mode: string): UserConfig {
         '/api': apiProxy
       }
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+          }
+        }
+      }
+    },
     css: {
       preprocessorOptions: {
         scss: {

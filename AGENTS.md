@@ -31,10 +31,11 @@ The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-late
 
 ## Current Findings
 
-- `src/stores/counter.ts`, starter welcome/icon components, and starter tests still look like Vue template scaffolding and should not guide new backend-backed work.
-- `public/sw.js` is a self-destroying service worker and explicitly says it should not be version controlled.
-- Some backend features are intentionally still generic or shallow: operational endpoints, FileMgr storage discovery, deep nested railway detail pages, and fully stateful reactions.
-- Local verification may fail on older Node runtimes. Use Node 26 for meaningful results.
+- The frontend is API-backed and production-shaped: auth/token store, metadata-driven resource CRUD, staff moderation, map/search, and media/album social interactions.
+- Reuse shared primitives from `src/components/common` (`AppField`, `AppInput`, `AppTextarea`, `AppSelect`, `AppCheckbox`, `AppButton`, `EntityPicker`, `ConfirmDialog`, status/empty/skeleton/pagination/card/spinner) before adding new UI abstractions.
+- Keep role gating aligned across `src/services/api/permissions.ts`, resource metadata access (`resources.ts`), and route guard metadata in `src/router/index.ts`.
+- Preserve current accessibility/responsiveness conventions: skip link + single `<main>`, labeled fields, combobox/listbox semantics, confirm-dialog focus trap, reduced-motion support, and token-driven breakpoints/theme variables.
+- Unit testing is substantial (approximately 54 spec files / 164 tests). CI currently runs lint + unit tests on Node 26; Cypress specs are maintained separately.
 
 ## Commands
 

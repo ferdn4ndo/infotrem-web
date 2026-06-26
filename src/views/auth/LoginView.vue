@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppButton from '@/components/common/AppButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
@@ -11,43 +14,59 @@ const email = ref('')
 const password = ref('')
 
 async function submitLogin() {
-  await auth.login({ email: email.value, password: password.value })
-  await router.push(String(route.query.redirect ?? '') || { name: 'me' })
+  try {
+    await auth.login({ email: email.value, password: password.value })
+    await router.push(String(route.query.redirect ?? '') || { name: 'me' })
+  } catch {
+    // auth.login surfaces auth.errorMessage and re-throws; catch here to avoid unhandled promises.
+  }
 }
 </script>
 
 <template>
-  <main class="AuthView">
+  <section class="AuthView">
     <h1>Entrar</h1>
-    <form class="AuthView-Form" data-cy="login-form" @submit.prevent="submitLogin">
-      <label>
-        E-mail
-        <input v-model="email" data-cy="login-email" type="email" autocomplete="email" required />
-      </label>
-      <label>
-        Senha
-        <input
-          v-model="password"
-          data-cy="login-password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </label>
-      <button type="submit" data-cy="login-submit" :disabled="auth.isLoading">Entrar</button>
-      <p v-if="auth.errorMessage">{{ auth.errorMessage }}</p>
-    </form>
-  </main>
+    <AppCard>
+      <form class="AuthView-Form" data-cy="login-form" @submit.prevent="submitLogin">
+        <label>
+          E-mail
+          <input v-model="email" data-cy="login-email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Senha
+          <input
+            v-model="password"
+            data-cy="login-password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <AppButton type="submit" data-cy="login-submit" :disabled="auth.isLoading"
+          >Entrar</AppButton
+        >
+        <StatusMessage v-if="auth.isLoading" state="loading" message="Entrando..." />
+        <StatusMessage v-if="auth.errorMessage" state="error" :message="auth.errorMessage" />
+      </form>
+    </AppCard>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .AuthView {
-  padding: 24px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-4);
 
   &-Form {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
     max-width: 420px;
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    padding: var(--space-3);
   }
 }
 </style>
