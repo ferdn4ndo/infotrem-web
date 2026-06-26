@@ -1,19 +1,23 @@
 # InfoTrem Web
 
-InfoTrem Web is a Vue 3 + Vite frontend for InfoTrem. It now includes
-backend-backed auth/account flows, contact, media and album discovery,
-guided media upload, search, map results, generic resource browsing,
+InfoTrem Web is a Vue 3 + Vite frontend for InfoTrem. It includes
+auth/account flows, contact, media and album discovery, guided
+media upload, search, map results, generic resource browsing,
 information contributions, and staff/admin resource management.
 
 ## Requirements
 
-- Node.js `>=26 <27`
-- Yarn 1.x via Corepack or a compatible global Yarn install
+- Node.js `>=26 <27` (`.nvmrc` pins major version `26`; use [nvm](https://github.com/nvm-sh/nvm))
+- Yarn 1.x installed globally under that Node version (`npm install -g yarn`)
 
 ```sh
-corepack enable
+nvm install
+nvm use
+npm install -g yarn   # if yarn is not on PATH after switching Node versions
 yarn install
 ```
+
+From the parent `infotrem` repo: `make setup-node` or `make bootstrap`.
 
 ## Common Commands
 

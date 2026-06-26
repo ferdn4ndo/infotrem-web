@@ -44,8 +44,6 @@ const ariaInvalid = computed(() => (props.error ? 'true' : undefined))
         :id="fieldId"
         :required="required"
         :disabled="disabled"
-        :aria-invalid="ariaInvalid"
-        :aria-describedby="describedBy"
         :ariaInvalid="ariaInvalid"
         :ariaDescribedby="describedBy"
       />

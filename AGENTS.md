@@ -4,7 +4,26 @@
 
 InfoTrem Web is a Vue 3 single-page app built with Vite, TypeScript, Pinia, Vue Router, SCSS, FontAwesome, Vitest, Cypress, ESLint, Stylelint, and Prettier. It is backend-backed through the InfoTrem API using the shared HTTP client under `src/services/http` and feature services under `src/services/api`.
 
-The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-latest` with `actions/setup-node@v6` and `node-version: 26.x`.
+The runtime target is Node.js `>=26 <27` (see `.nvmrc`). CI uses GitHub Actions on `ubuntu-latest` with `actions/setup-node@v6` and `node-version: 26.x`.
+
+## Local Node toolchain (nvm)
+
+Use [nvm](https://github.com/nvm-sh/nvm) to match CI. From the repo root or this
+submodule:
+
+```sh
+nvm install   # reads .nvmrc
+nvm use
+npm install -g yarn   # once per Node version if yarn is missing
+yarn install
+```
+
+From the parent `infotrem` repo, `make setup-node` and `make bootstrap` run the
+same checks. Root `make web-dev` / `make web-install` and
+`../scripts/with-node.sh yarn …` activate Node 26 automatically.
+
+Do not use `YARN_IGNORE_ENGINES` when Node 26 is available — fix the Node version
+instead.
 
 ## Important Files
 
@@ -40,6 +59,7 @@ The runtime target is Node.js `>=26 <27`. CI uses GitHub Actions on `ubuntu-late
 ## Commands
 
 ```sh
+nvm use
 yarn install
 yarn dev
 yarn build
@@ -54,7 +74,7 @@ Use `yarn --frozen-lockfile` in CI or when checking that `yarn.lock` is already 
 
 1. Read `README.md` and the relevant file under `docs/` before changing broad behavior.
 2. Keep edits small and aligned with the current Vue/Vite patterns.
-3. Run `yarn lint` after code or docs formatting changes when Node 26 is available.
+3. Run `nvm use` then `yarn lint` after code or docs formatting changes.
 4. Run `yarn test` for logic, component, or dependency changes.
 5. Do not commit generated artifacts such as `dist`, `coverage`, Cypress screenshots/videos, or `node_modules`.
 
