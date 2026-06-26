@@ -18,27 +18,36 @@ updates:
     groups:
       core:
         patterns:
-          - "@vue/*"
-          - "vue*"
-          - "vite*"
-          - "@vite*"
+          - "@fortawesome/*"
           - "@tsconfig/*"
           - "@types/*"
-          - "typescript*"
+          - "@vite*"
+          - "@vue/*"
+          - "cypress*"
+          - "form-data*"
+          - "js-yaml*"
+          - "jsdom*"
+          - "leaflet*"
+          - "npm-run-all2*"
+          - "pinia*"
           - "postcss-html*"
           - "sass*"
-          - "pinia*"
-          - "cypress*"
-          - "jsdom*"
-          - "npm-run-all2*"
           - "start-server-and-test*"
-          - "@fortawesome/*"
+          - "tmp"
+          - "typescript*"
+          - "undici*"
+          - "vite"
+          - "vitest"
+          - "vue"
+          - "vue-router*"
+          - "vue-tsc*"
       lint:
         patterns:
-          - "eslint*"
-          - "stylelint*"
-          - "prettier*"
+          - "@eslint/*"
           - "@rushstack/eslint*"
+          - "eslint*"
+          - "prettier*"
+          - "stylelint*"
 
   # Fetch and update latest `github-actions` packages
   - package-ecosystem: "github-actions"
@@ -59,3 +68,4 @@ updates:
       actions:
         patterns:
           - "actions/*"
+          - "aws-actions/*"

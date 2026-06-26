@@ -39,7 +39,12 @@ function initTheme() {
     return
   }
 
-  const storedTheme = getLocalStorage()?.getItem(THEME_STORAGE_KEY) ?? null
+  let storedTheme: string | null
+  try {
+    storedTheme = getLocalStorage()?.getItem(THEME_STORAGE_KEY) ?? null
+  } catch {
+    storedTheme = null
+  }
   const nextTheme: Theme =
     storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : getPreferredTheme()
 

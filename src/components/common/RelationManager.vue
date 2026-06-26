@@ -46,6 +46,7 @@ const editingRow = ref<EntityRow | null>(null)
 const deletingRow = ref<EntityRow | null>(null)
 let activeRequestId = 0
 let activeLoadController: AbortController | null = null
+let lastLoadKey = ''
 
 const relationAsResource = computed<ResourceConfig>(() => ({
   key: props.relation.key,
@@ -119,6 +120,17 @@ const deleteDialogOpen = computed({
 })
 
 async function loadRows() {
+  // Reset pagination when the parent entity or relation changes so we never
+  // request a now-out-of-range page (which would render an empty list).
+  const loadKey = `${parentPath.value}|${props.relation.pathSuffix}`
+  if (loadKey !== lastLoadKey) {
+    lastLoadKey = loadKey
+    if (offset.value !== 0) {
+      offset.value = 0
+      return
+    }
+  }
+
   const requestId = ++activeRequestId
   activeLoadController?.abort()
   activeLoadController = new AbortController()
