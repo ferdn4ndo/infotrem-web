@@ -2,13 +2,19 @@
 
 ## Environment
 
-Use Node.js `>=26 <27` and Yarn 1.x.
+Use Node.js `>=26 <27` and Yarn 1.x. The repo ships `.nvmrc` with major version
+`26`.
 
 ```sh
-corepack enable
+nvm install
+nvm use
+npm install -g yarn   # once per Node version when yarn is missing
 yarn install
 yarn dev
 ```
+
+When working from the parent `infotrem` repo, `make setup-node` performs the same
+toolchain setup and `make web-dev` runs Vite through `./scripts/with-node.sh`.
 
 The development server is provided by Vite. Production preview uses Vite's preview server on port `4173`, which is also the base URL for Cypress e2e tests.
 

@@ -1,6 +1,6 @@
 import '@/styles/main.scss'
 
-import { createApp } from 'vue'
+import { createApp, type Component } from 'vue'
 import { createPinia } from 'pinia'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -17,7 +17,7 @@ const { initTheme } = useTheme()
 initTheme()
 
 prepareIconsLibrary()
-app.component('font-awesome-icon', FontAwesomeIcon)
+app.component('font-awesome-icon', FontAwesomeIcon as Component)
 
 app.use(createPinia())
 app.use(router)

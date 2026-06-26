@@ -86,4 +86,7 @@ Dependabot is configured in `.github/dependabot.yml` for npm packages and GitHub
 
 ## Verification Caveat
 
-The repo target is Node 26. Running checks on older local Node versions can produce dependency/runtime failures that are not representative of CI.
+The repo target is Node 26. Use `nvm use` (or `make setup-node` from the parent
+repo) before running yarn scripts locally. Running checks on older Node versions
+can produce engine-check or type-check failures that are not representative of CI.
+Do not paper over a wrong Node version with `YARN_IGNORE_ENGINES`.
