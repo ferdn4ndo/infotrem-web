@@ -12,6 +12,8 @@ jobs:
   ci:
     name: "CI Pipeline"
     runs-on: "${{ matrix.os }}"
+    env:
+      VITE_INFOTREM_API_BASE_URL: "http://localhost:8080"
 
     strategy:
       matrix:

@@ -59,8 +59,7 @@ yarn test:e2e:dev
 
 ## Tooling Notes
 
-The app calls the backend through same-origin `/api/*`; Vite dev/preview proxy
-rewrites that path to `VITE_INFOTREM_API_BASE_URL`. In production this same
-path should be routed by the deployment gateway or reverse proxy.
+The app calls the backend using `VITE_INFOTREM_API_BASE_URL` as the request
+base URL. This env var is required for both dev and production builds.
 
 The project has moved to ESLint flat config in `eslint.config.js`. TypeScript path aliases are configured for `@/*` and `~/*` in app/test configs and should point at `src/*`; Vite also maps `@` to `src`.
