@@ -9,19 +9,29 @@ type RequestOptions = {
 }
 
 let authTokenProvider: (() => string | null) | null = null
+const configuredApiBaseUrl = import.meta.env.VITE_INFOTREM_API_BASE_URL?.trim()
+
+if (!configuredApiBaseUrl) {
+  throw new Error('Missing required env VITE_INFOTREM_API_BASE_URL')
+}
 
 export function setAuthTokenProvider(provider: () => string | null) {
   authTokenProvider = provider
 }
 
 function apiPath(path: string, query?: RequestOptions['query']) {
-  const normalizedPath = path.startsWith('/api')
-    ? path
-    : `/api${path.startsWith('/') ? path : `/${path}`}`
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path
+  const normalizedBaseUrl = configuredApiBaseUrl.endsWith('/')
+    ? configuredApiBaseUrl
+    : `${configuredApiBaseUrl}/`
+  const requestUrl = new URL(normalizedPath, normalizedBaseUrl)
   const searchParams = query ? toSearchParams(query) : null
-  const queryString = searchParams?.toString()
 
-  return queryString ? `${normalizedPath}?${queryString}` : normalizedPath
+  if (searchParams) {
+    requestUrl.search = searchParams.toString()
+  }
+
+  return requestUrl.toString()
 }
 
 async function parseBody(response: Response) {

@@ -6,7 +6,11 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 
 export function createViteConfig(mode: string): UserConfig {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_INFOTREM_API_BASE_URL || 'http://localhost:8080'
+  const apiTarget = env.VITE_INFOTREM_API_BASE_URL?.trim()
+
+  if (!apiTarget) {
+    throw new Error('Missing required env VITE_INFOTREM_API_BASE_URL')
+  }
   const apiProxy = {
     target: apiTarget,
     changeOrigin: true,
